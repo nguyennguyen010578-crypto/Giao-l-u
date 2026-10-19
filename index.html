@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kênh Giao Lưu Cộng Đồng - Google Login</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Thư viện Google Identity Services SDK -->
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+</head>
+<body class="bg-slate-100 text-slate-800 h-screen flex flex-col font-sans select-none m-0 p-0">
+
+    <!-- TOP HEADER -->
+    <header class="bg-white border-b border-slate-200 h-14 flex items-center justify-between px-6 z-30 shadow-sm">
+        <div class="flex items-center gap-3">
+            <div class="w-9 h-9 bg-emerald-600 text-white rounded-xl flex items-center justify-center font-bold shadow">
+                <i class="fas fa-comments"></i>
+            </div>
+            <span class="font-extrabold text-base text-slate-900">Kênh Giao Lưu Cộng Đồng</span>
+        </div>
+
+        <div class="flex items-center gap-3">
+            <div id="userProfileGroup" class="hidden flex items-center gap-2">
+                <div class="flex items-center gap-2 bg-slate-100 px-3 py-1.5 rounded-full border">
+                    <img id="userAvatarImg" src="" class="w-6 h-6 rounded-full object-cover" alt="Avatar">
+                    <span id="userNameText" class="font-bold text-xs text-slate-700"></span>
+                    <button onclick="handleLogout()" class="text-red-500 hover:text-red-700 text-xs ml-1" title="Đăng xuất"><i class="fas fa-right-from-bracket"></i> Đổi tài khoản</button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- MAIN CHAT CONTAINER -->
+    <main class="flex-1 p-4 max-w-4xl mx-auto w-full flex flex-col overflow-hidden">
+        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 flex flex-col flex-1 overflow-hidden">
+            
+            <!-- Chat Room Header Info -->
+            <div class="px-6 py-3 border-b border-slate-100 flex items-center justify-between bg-white">
+                <div class="flex items-center gap-3">
+                    <div class="w-8 h-8 bg-emerald-100 text-emerald-600 rounded-lg flex items-center justify-center font-bold text-xs">
+                        <i class="fas fa-globe"></i>
+                    </div>
+                    <div>
+                        <h2 class="font-bold text-xs text-slate-800">Phòng Trò Chuyện Trực Tuyến</h2>
+                        <div class="text-[10px] text-emerald-600 font-semibold flex items-center gap-1">
+                            <span class="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></span> Trực tuyến với Gmail thật
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Messages Stream Feed -->
+            <div id="chatMessagesContainer" class="flex-1 p-6 overflow-y-auto space-y-4 bg-slate-50/50"></div>
+
+            <!-- Chat Input Box Area -->
+            <div class="p-4 bg-white border-t border-slate-200">
+                <div class="bg-slate-50 border border-slate-200 rounded-2xl p-3 space-y-2 focus-within:border-indigo-500 transition">
+                    <textarea id="chatInputText" placeholder="Nhập tin nhắn giao lưu bằng tài khoản Google thật..." rows="2" class="w-full bg-transparent text-xs text-slate-800 placeholder-slate-400 outline-none resize-none"></textarea>
+                    
+                    <div class="flex items-center justify-between pt-2 border-t border-slate-200/60 text-xs">
+                        <div class="flex items-center gap-3 text-slate-500">
+                            <button onclick="triggerImageUpload()" class="hover:text-indigo-600 flex items-center gap-1" title="Đính kèm ảnh"><i class="far fa-image text-emerald-500 text-base"></i> Đính kèm ảnh</button>
+                        </div>
+
+                        <div class="flex items-center gap-3">
+                            <span class="text-[10px] text-slate-400">Enter ↵</span>
+                            <button onclick="sendChatMessage()" class="px-4 py-1.5 bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl font-bold shadow transition text-xs flex items-center gap-1.5">
+                                <i class="fas fa-paper-plane"></i> Gửi
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <!-- Hidden Input File để chọn ảnh -->
+    <input type="file" id="chatImageInput" accept="image/*" class="hidden" onchange="handleChatImage(event)">
+
+    <!-- GOOGLE AUTHENTICATION MODAL -->
+    <div id="loginModal" class="fixed inset-0 z-50 bg-slate-900/70 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="bg-white rounded-3xl shadow-2xl max-w-sm w-full p-8 space-y-6 border border-slate-100 text-center">
+            <div class="w-14 h-14 bg-indigo-50 text-indigo-600 rounded-2xl mx-auto flex items-center justify-center text-2xl shadow mb-2">
+                <i class="fab fa-google"></i>
+            </div>
+
+            <div class="space-y-1">
+                <h3 class="font-bold text-xl text-slate-800">Xác thực tài khoản Google</h3>
+                <p class="text-xs text-slate-500">Đăng nhập bằng tài khoản Gmail thật của bạn để tham gia phòng chat</p>
+            </div>
+
+            <!-- Nút đăng nhập Google chính thức (Google Sign-In Button Container) -->
+            <div class="flex justify-center py-3">
+                <div id="g_id_onload"
+                     data-client_id="YOUR_GOOGLE_CLIENT_ID.apps.googleusercontent.com"
+                     data-callback="handleGoogleCredentialResponse"
+                     data-auto_prompt="false">
+                </div>
+                <div class="g_id_signin"
+                     data-type="standard"
+                     data-size="large"
+                     data-theme="outline"
+                     data-text="sign_in_with"
+                     data-shape="pill"
+                     data-logo_alignment="left">
+                </div>
+            </div>
+
+            <p class="text-[11px] text-slate-400 leading-relaxed">
+                * Lưu ý: Để nút Google hoạt động với Gmail thật của bạn, hãy thay thế <code class="bg-slate-100 px-1 py-0.5 rounded text-slate-600">YOUR_GOOGLE_CLIENT_ID</code> bằng Client ID lấy từ Google Cloud Console.
+            </p>
+        </div>
+    </div>
+
+    <!-- JAVASCRIPT LOGIC -->
+    <script>
+        let currentUser = null;
+        let messages = [];
+
+        function initApp() {
+            try {
+                const savedUser = localStorage.getItem('real_google_chat_user');
+                if (savedUser) {
+                    currentUser = JSON.parse(savedUser);
+                    document.getElementById('loginModal').classList.add('hidden');
+                } else {
+                    document.getElementById('loginModal').classList.remove('hidden');
+                }
+
+                const savedMsgs = localStorage.getItem('real_google_chat_stream');
+                if (savedMsgs) messages = JSON.parse(savedMsgs);
+            } catch(e) {}
+            updateUserUI();
+            renderMessages();
+        }
+
+        window.onload = initApp;
+
+        // Xử lý khi đăng nhập Google thành công trả về token credential
+        function handleGoogleCredentialResponse(response) {
+            try {
+                // Giải mã JWT token trả về từ Google để lấy thông tin tên, email và avatar thật
+                const base64Url = response.credential.split('.')[1];
+                const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+                const jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
+                    return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+                }).join(''));
+
+                const googleUser = JSON.parse(jsonPayload);
+                
+                currentUser = {
+                    name: googleUser.name,
+                    email: googleUser.email,
+                    picture: googleUser.picture
+                };
+
+                localStorage.setItem('real_google_chat_user', JSON.stringify(currentUser));
+                document.getElementById('loginModal').classList.add('hidden');
+                updateUserUI();
+                renderMessages();
+            } catch (error) {
+                alert('Lỗi xác thực tài khoản Google!');
+            }
+        }
+
+        function handleLogout() {
+            localStorage.removeItem('real_google_chat_user');
+            currentUser = null;
+            document.getElementById('loginModal').classList.remove('hidden');
+            updateUserUI();
+        }
+
+        function updateUserUI() {
+            const userGrp = document.getElementById('userProfileGroup');
+            const nameTxt = document.getElementById('userNameText');
+            const avatarImg = document.getElementById('userAvatarImg');
+
+            if (currentUser) {
+                userGrp.classList.remove('hidden');
+                nameTxt.innerText = `${currentUser.name} (${currentUser.email})`;
+                if(currentUser.picture) avatarImg.src = currentUser.picture;
+            } else {
+                userGrp.classList.add('hidden');
+            }
+        }
+
+        function sendChatMessage() {
+            if (!currentUser) {
+                alert('Vui lòng đăng nhập Google để gửi tin nhắn!');
+                return;
+            }
+
+            const input = document.getElementById('chatInputText');
+            const text = input.value.trim();
+            if(!text) return;
+
+            messages.push({
+                id: Date.now(),
+                author: currentUser.name,
+                email: currentUser.email,
+                avatar: currentUser.picture || '',
+                content: text,
+                time: 'Vừa xong',
+                type: 'text'
+            });
+
+            localStorage.setItem('real_google_chat_stream', JSON.stringify(messages));
+            input.value = '';
+            renderMessages();
+        }
+
+        function triggerImageUpload() {
+            if (!currentUser) {
+                alert('Vui lòng đăng nhập Google để gửi ảnh!');
+                return;
+            }
+            document.getElementById('chatImageInput').click();
+        }
+
+        function handleChatImage(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const imageUrl = e.target.result;
+                messages.push({
+                    id: Date.now(),
+                    author: currentUser.name,
+                    email: currentUser.email,
+                    avatar: currentUser.picture || '',
+                    content: imageUrl,
+                    time: 'Vừa xong',
+                    type: 'image'
+                });
+                localStorage.setItem('real_google_chat_stream', JSON.stringify(messages));
+                renderMessages();
+                event.target.value = '';
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function renderMessages() {
+            const container = document.getElementById('chatMessagesContainer');
+            container.innerHTML = '';
+
+            messages.forEach(msg => {
+                const div = document.createElement('div');
+                div.className = "flex items-start gap-3";
+                
+                let bodyContent = `<div class="mt-1 bg-white border border-slate-200 rounded-xl px-4 py-2.5 text-xs text-slate-700 shadow-sm inline-block">${msg.content}</div>`;
+                if(msg.type === 'image') {
+                    bodyContent = `<div class="mt-1"><img src="${msg.content}" class="max-w-[300px] rounded-xl border shadow-sm"></div>`;
+                }
+
+                const avatarHtml = msg.avatar 
+                    ? `<img src="${msg.avatar}" class="w-8 h-8 rounded-full object-cover">` 
+                    : `<div class="w-8 h-8 bg-indigo-600 text-white rounded-full flex items-center justify-center font-bold text-xs">${msg.author.charAt(0).toUpperCase()}</div>`;
+
+                div.innerHTML = `
+                    ${avatarHtml}
+                    <div>
+                        <div class="flex items-center gap-2">
+                            <span class="font-bold text-xs text-slate-800">${msg.author}</span>
+                            <span class="text-[10px] text-slate-400">${msg.time}</span>
+                        </div>
+                        ${bodyContent}
+                    </div>
+                `;
+                container.appendChild(div);
+            });
+            container.scrollTop = container.scrollHeight;
+        }
+    </script>
+</body>
+</html>
