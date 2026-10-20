@@ -96,7 +96,7 @@
             <!-- Nút đăng nhập Google chính thức (Google Sign-In Button Container) -->
             <div class="flex justify-center py-3">
                 <div id="g_id_onload"
-                     data-client_id="YOUR_GOOGLE_CLIENT_ID.apps.googleusercontent.com"
+                     data-client_id="474895252858-e9nkstvak3uj4p2r10jbr32st8m4rgqn.apps.googleusercontent.com"
                      data-callback="handleGoogleCredentialResponse"
                      data-auto_prompt="false">
                 </div>
@@ -109,10 +109,6 @@
                      data-logo_alignment="left">
                 </div>
             </div>
-
-            <p class="text-[11px] text-slate-400 leading-relaxed">
-                * Lưu ý: Để nút Google hoạt động với Gmail thật của bạn, hãy thay thế <code class="bg-slate-100 px-1 py-0.5 rounded text-slate-600">YOUR_GOOGLE_CLIENT_ID</code> bằng Client ID lấy từ Google Cloud Console.
-            </p>
         </div>
     </div>
 
@@ -143,7 +139,6 @@
         // Xử lý khi đăng nhập Google thành công trả về token credential
         function handleGoogleCredentialResponse(response) {
             try {
-                // Giải mã JWT token trả về từ Google để lấy thông tin tên, email và avatar thật
                 const base64Url = response.credential.split('.')[1];
                 const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
                 const jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
