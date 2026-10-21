@@ -28,19 +28,16 @@
 
         <div class="flex items-center gap-3">
             <div id="userProfileGroup" class="hidden flex items-center gap-2">
-                <div class="flex items-center gap-2 bg-slate-100 px-3 py-1.5 rounded-full border border-slate-200">
+                <div class="flex items-center gap-2 bg-slate-100 px-3 py-1.5 rounded-full border border-slate-200 hover:bg-slate-200/60 transition cursor-pointer" onclick="viewUserProfile(currentUser.email, currentUser.name, currentUser.picture)">
                     <img id="userAvatarImg" src="" class="w-7 h-7 rounded-full object-cover border" alt="Avatar">
-                    <div class="flex flex-col text-left">
-                        <span id="userNameText" class="font-bold text-xs text-slate-800 leading-tight"></span>
-                        <span id="userEmailText" class="text-[10px] text-slate-400"></span>
-                    </div>
-                    <button onclick="openEditProfileModal()" class="text-indigo-600 hover:text-indigo-800 text-xs ml-1 p-1" title="Chỉnh sửa hồ sơ">
-                        <i class="fas fa-pen"></i>
-                    </button>
-                    <button onclick="handleLogout()" class="text-red-500 hover:text-red-700 text-xs ml-1 p-1" title="Đăng xuất">
-                        <i class="fas fa-right-from-bracket"></i>
-                    </button>
+                    <span id="userNameText" class="font-bold text-xs text-slate-800"></span>
                 </div>
+                <button onclick="event.stopPropagation(); openEditProfileModal()" class="text-indigo-600 hover:text-indigo-800 text-xs p-2 rounded-full hover:bg-slate-200 transition" title="Chỉnh sửa hồ sơ">
+                    <i class="fas fa-pen"></i>
+                </button>
+                <button onclick="event.stopPropagation(); handleLogout()" class="text-red-500 hover:text-red-700 text-xs p-2 rounded-full hover:bg-slate-200 transition" title="Đăng xuất">
+                    <i class="fas fa-right-from-bracket"></i>
+                </button>
             </div>
         </div>
     </header>
@@ -108,7 +105,6 @@
                 <p class="text-xs text-slate-500">Đăng nhập bằng tài khoản Gmail thật của bạn để tham gia phòng chat</p>
             </div>
 
-            <!-- Nút đăng nhập Google chính thức -->
             <div class="flex justify-center py-3">
                 <div id="g_id_onload"
                      data-client_id="474895252858-e9nkstvak3uj4p2r10jbr32st8m4rgqn.apps.googleusercontent.com"
@@ -123,6 +119,43 @@
                      data-shape="pill"
                      data-logo_alignment="left">
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL TRANG CÁ NHÂN (VIEW PROFILE MODAL) -->
+    <div id="viewProfileModal" class="fixed inset-0 z-50 bg-slate-900/70 backdrop-blur-sm flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-3xl shadow-2xl max-w-sm w-full p-6 space-y-6 border border-slate-100 text-center relative overflow-hidden">
+            <button onclick="closeViewProfileModal()" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600"><i class="fas fa-times text-lg"></i></button>
+
+            <!-- Background Header Banner -->
+            <div class="h-20 bg-gradient-to-r from-emerald-500 to-indigo-600 -mx-6 -mt-6 rounded-t-3xl"></div>
+
+            <!-- Avatar -->
+            <div class="relative -mt-16 inline-block">
+                <img id="profileCardAvatar" src="" class="w-24 h-24 rounded-full object-cover border-4 border-white shadow-md mx-auto bg-white">
+            </div>
+
+            <!-- User Info (Đã loại bỏ hiển thị email hoàn toàn) -->
+            <div class="space-y-1">
+                <h3 id="profileCardName" class="font-bold text-lg text-slate-900"></h3>
+                <div id="profileBadgeSelf" class="hidden inline-block px-2.5 py-0.5 bg-emerald-100 text-emerald-700 font-bold text-[10px] rounded-full mt-1">Tài khoản của bạn</div>
+            </div>
+
+            <!-- Stats -->
+            <div class="grid grid-cols-1 bg-slate-50 p-3 rounded-2xl border border-slate-100 text-xs">
+                <div>
+                    <span class="text-slate-400 block text-[10px] uppercase font-bold">Số tin nhắn đã gửi</span>
+                    <span id="profileCardMsgCount" class="font-extrabold text-slate-800 text-base">0</span>
+                </div>
+            </div>
+
+            <!-- Actions -->
+            <div class="flex items-center justify-center gap-2 pt-2">
+                <button id="profileEditBtn" onclick="closeViewProfileModal(); openEditProfileModal();" class="hidden px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-bold text-xs shadow flex items-center gap-1.5">
+                    <i class="fas fa-pen"></i> Chỉnh sửa hồ sơ
+                </button>
+                <button onclick="closeViewProfileModal()" class="px-5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-xl font-bold text-xs">Đóng</button>
             </div>
         </div>
     </div>
@@ -185,7 +218,6 @@
 
         function initApp() {
             try {
-                // Kiểm tra tài khoản đã lưu
                 const savedUser = localStorage.getItem('real_google_chat_user');
                 if (savedUser) {
                     currentUser = JSON.parse(savedUser);
@@ -194,7 +226,6 @@
                     document.getElementById('loginModal').classList.remove('hidden');
                 }
 
-                // Tự động xóa tin nhắn cũ hơn 1 tháng (30 ngày)
                 const savedMsgs = localStorage.getItem('real_google_chat_stream');
                 if (savedMsgs) {
                     const allMessages = JSON.parse(savedMsgs);
@@ -212,7 +243,6 @@
 
         window.onload = initApp;
 
-        // Xử lý khi đăng nhập Google thành công
         function handleGoogleCredentialResponse(response) {
             try {
                 const base64Url = response.credential.split('.')[1];
@@ -248,20 +278,40 @@
         function updateUserUI() {
             const userGrp = document.getElementById('userProfileGroup');
             const nameTxt = document.getElementById('userNameText');
-            const emailTxt = document.getElementById('userEmailText');
             const avatarImg = document.getElementById('userAvatarImg');
 
             if (currentUser) {
                 userGrp.classList.remove('hidden');
                 nameTxt.innerText = currentUser.name;
-                emailTxt.innerText = currentUser.email;
                 if(currentUser.picture) avatarImg.src = currentUser.picture;
             } else {
                 userGrp.classList.add('hidden');
             }
         }
 
-        // --- HÀM XỬ LÝ CHỈNH SỬA HỒ SƠ ---
+        function viewUserProfile(email, name, picture) {
+            document.getElementById('profileCardName').innerText = name;
+            document.getElementById('profileCardAvatar').src = picture || `https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(name)}`;
+
+            const userMsgCount = messages.filter(m => m.email === email).length;
+            document.getElementById('profileCardMsgCount').innerText = userMsgCount;
+
+            const isSelf = currentUser && currentUser.email === email;
+            if (isSelf) {
+                document.getElementById('profileBadgeSelf').classList.remove('hidden');
+                document.getElementById('profileEditBtn').classList.remove('hidden');
+            } else {
+                document.getElementById('profileBadgeSelf').classList.add('hidden');
+                document.getElementById('profileEditBtn').classList.add('hidden');
+            }
+
+            document.getElementById('viewProfileModal').classList.remove('hidden');
+        }
+
+        function closeViewProfileModal() {
+            document.getElementById('viewProfileModal').classList.add('hidden');
+        }
+
         function openEditProfileModal() {
             if (!currentUser) return;
             document.getElementById('editNameInput').value = currentUser.name;
@@ -304,9 +354,9 @@
             localStorage.setItem('real_google_chat_user', JSON.stringify(currentUser));
             updateUserUI();
             closeEditProfileModal();
+            renderMessages();
         }
 
-        // --- CHAT LOGIC ---
         function sendChatMessage() {
             if (!currentUser) {
                 alert('Vui lòng đăng nhập Google để gửi tin nhắn!');
@@ -377,14 +427,14 @@
                 }
 
                 const avatarHtml = msg.avatar 
-                    ? `<img src="${msg.avatar}" class="w-8 h-8 rounded-full object-cover border">` 
-                    : `<div class="w-8 h-8 bg-indigo-600 text-white rounded-full flex items-center justify-center font-bold text-xs">${msg.author.charAt(0).toUpperCase()}</div>`;
+                    ? `<img src="${msg.avatar}" onclick="viewUserProfile('${msg.email}', '${msg.author.replace(/'/g, "\\'")}', '${msg.avatar}')" class="w-8 h-8 rounded-full object-cover border cursor-pointer hover:opacity-80 transition">` 
+                    : `<div onclick="viewUserProfile('${msg.email}', '${msg.author.replace(/'/g, "\\'")}', '')" class="w-8 h-8 bg-indigo-600 text-white rounded-full flex items-center justify-center font-bold text-xs cursor-pointer hover:opacity-80 transition">${msg.author.charAt(0).toUpperCase()}</div>`;
 
                 div.innerHTML = `
                     ${avatarHtml}
                     <div>
                         <div class="flex items-center gap-2">
-                            <span class="font-bold text-xs text-slate-800">${msg.author}</span>
+                            <span onclick="viewUserProfile('${msg.email}', '${msg.author.replace(/'/g, "\\'")}', '${msg.avatar || ''}')" class="font-bold text-xs text-slate-800 hover:underline cursor-pointer">${msg.author}</span>
                             <span class="text-[10px] text-slate-400">${msg.time}</span>
                         </div>
                         ${bodyContent}
