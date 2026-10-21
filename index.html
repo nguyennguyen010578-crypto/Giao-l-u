@@ -75,7 +75,7 @@
                                 <i class="far fa-image text-emerald-500 text-base"></i> Đính kèm ảnh
                             </button>
                             <button onclick="openGifModal()" class="hover:text-indigo-600 flex items-center gap-1 font-medium text-purple-600" title="Chọn GIF">
-                                <i class="fas fa-search-location text-base"></i> Tìm GIF
+                                <i class="fas fa-film text-base"></i> Kho GIF
                             </button>
                         </div>
 
@@ -126,12 +126,12 @@
         </div>
     </div>
 
-    <!-- MODAL TÌM KIẾM GIF -->
+    <!-- MODAL TÌM KIẾM VÀ CHỌN GIF -->
     <div id="gifModal" class="fixed inset-0 z-50 bg-slate-900/70 backdrop-blur-sm flex items-center justify-center p-4 hidden">
         <div class="bg-white rounded-3xl shadow-2xl max-w-md w-full p-6 space-y-4 border border-slate-100 relative">
             <div class="flex items-center justify-between border-b pb-3">
                 <h3 class="font-bold text-base text-slate-800 flex items-center gap-2">
-                    <i class="fas fa-film text-purple-600"></i> Tìm kiếm ảnh GIF
+                    <i class="fas fa-film text-purple-600"></i> Kho ảnh GIF động
                 </h3>
                 <button onclick="closeGifModal()" class="text-slate-400 hover:text-slate-600"><i class="fas fa-times text-lg"></i></button>
             </div>
@@ -139,12 +139,12 @@
             <!-- Ô TÌM KIẾM GIF -->
             <div class="flex items-center gap-2 bg-slate-100 px-3 py-2 rounded-xl border border-slate-200">
                 <i class="fas fa-search text-slate-400 text-xs"></i>
-                <input type="text" id="gifSearchInput" onkeyup="searchGifs(this.value)" placeholder="Nhập từ khóa tìm GIF (vd: cat, funny, meme)..." class="w-full bg-transparent text-xs outline-none">
+                <input type="text" id="gifSearchInput" onkeyup="filterGifs(this.value)" placeholder="Tìm kiếm nhanh (vd: mèo, vui, chào, ok, haha)..." class="w-full bg-transparent text-xs outline-none">
             </div>
 
             <!-- LƯỚI HIỂN THỊ KẾT QUẢ GIF -->
             <div id="gifGrid" class="grid grid-cols-2 gap-3 max-h-80 overflow-y-auto p-1">
-                <p class="col-span-2 text-center text-xs text-slate-400 py-6">Đang tải GIF thịnh hành...</p>
+                <!-- Sẽ được điền tự động bằng JavaScript -->
             </div>
         </div>
     </div>
@@ -252,8 +252,21 @@
         let messages = [];
         let tempAvatarData = null;
         let currentViewingEmail = null;
-        let searchTimeout = null;
         let lastMsgLength = 0;
+
+        // DANH SÁCH KHO GIF ĐỘNG CHẤT LƯỢNG CAO PHỔ BIẾN
+        const presetGifs = [
+            { url: "https://media.giphy.com/media/3o7TKSjRrfIPjeiOkM/giphy.gif", tags: "vui cười haha funny" },
+            { url: "https://media.giphy.com/media/l0HlNaQ6gWfllcjDO/giphy.gif", tags: "chào hello wave" },
+            { url: "https://media.giphy.com/media/xT9IgzoKnwFNmISR8I/giphy.gif", tags: "mèo cat cute dễ thương" },
+            { url: "https://media.giphy.com/media/26u4v35Q8Nm5qYCOs/giphy.gif", tags: "nhảy dance party vũ hội" },
+            { url: "https://media.giphy.com/media/3oEjI6SIIHBdRxXI40/giphy.gif", tags: "ngạc nhiên wow shock" },
+            { url: "https://media.giphy.com/media/111ebonMs90YLu/giphy.gif", tags: "ok đồng ý thumbs up duyệt" },
+            { url: "https://media.giphy.com/media/3oKIPnAiaMCws8nOsE/giphy.gif", tags: "buồn khóc sad tears" },
+            { url: "https://media.giphy.com/media/26ufdipQqU2lhNA4g/giphy.gif", tags: "tim yêu love heart" },
+            { url: "https://media.giphy.com/media/5vkW42nEAnX51Nksmi/giphy.gif", tags: "vỗ tay clap bravo tuyệt vời" },
+            { url: "https://media.giphy.com/media/9uIZm4w0nC7wQ/giphy.gif", tags: "mèo cat funny bựa" }
+        ];
 
         function initApp() {
             try {
@@ -355,52 +368,45 @@
             }
         }
 
-        // --- GIPHY SEARCH LOGIC (THAY THẾ TENOR ĐÃ ĐÓNG CỬA) ---
+        // --- HỆ THỐNG KHO GIF HOẠT ĐỘNG ỔN ĐỊNH ---
         function openGifModal() {
             if (!currentUser) {
                 alert('Vui lòng đăng nhập Google để chọn GIF!');
                 return;
             }
             document.getElementById('gifModal').classList.remove('hidden');
-            searchGifs('');
+            document.getElementById('gifSearchInput').value = '';
+            renderGifGrid(presetGifs);
         }
 
         function closeGifModal() {
             document.getElementById('gifModal').classList.add('hidden');
         }
 
-        function searchGifs(query) {
-            clearTimeout(searchTimeout);
-            searchTimeout = setTimeout(() => {
-                const grid = document.getElementById('gifGrid');
-                grid.innerHTML = `<p class="col-span-2 text-center text-xs text-slate-400 py-6">Đang tìm kiếm GIF...</p>`;
+        function filterGifs(keyword) {
+            const query = keyword.toLowerCase().trim();
+            if (!query) {
+                renderGifGrid(presetGifs);
+                return;
+            }
+            const filtered = presetGifs.filter(item => item.tags.toLowerCase().includes(query));
+            renderGifGrid(filtered);
+        }
 
-                const apiKey = 'dc6zaTOxFJmzC'; // Public Giphy API Key
-                const endpoint = query.trim() 
-                    ? `https://api.giphy.com/v1/gifs/search?api_key=${apiKey}&q=${encodeURIComponent(query)}&limit=12`
-                    : `https://api.giphy.com/v1/gifs/trending?api_key=${apiKey}&limit=12`;
-
-                fetch(endpoint)
-                    .then(res => res.json())
-                    .then(data => {
-                        grid.innerHTML = '';
-                        if (data.data && data.data.length > 0) {
-                            data.data.forEach(item => {
-                                const gifUrl = item.images.fixed_height.url;
-                                const img = document.createElement('img');
-                                img.src = gifUrl;
-                                img.className = "w-full h-28 object-cover rounded-xl cursor-pointer border hover:border-purple-500 transition hover:scale-[1.02]";
-                                img.onclick = () => sendGifMessage(gifUrl);
-                                grid.appendChild(img);
-                            });
-                        } else {
-                            grid.innerHTML = `<p class="col-span-2 text-center text-xs text-slate-400 py-6">Không tìm thấy GIF phù hợp</p>`;
-                        }
-                    })
-                    .catch(() => {
-                        grid.innerHTML = `<p class="col-span-2 text-center text-xs text-red-400 py-6">Lỗi kết nối bộ tìm kiếm GIF</p>`;
-                    });
-            }, 400);
+        function renderGifGrid(list) {
+            const grid = document.getElementById('gifGrid');
+            grid.innerHTML = '';
+            if (list.length === 0) {
+                grid.innerHTML = `<p class="col-span-2 text-center text-xs text-slate-400 py-6">Không tìm thấy GIF phù hợp</p>`;
+                return;
+            }
+            list.forEach(item => {
+                const img = document.createElement('img');
+                img.src = item.url;
+                img.className = "w-full h-28 object-cover rounded-xl cursor-pointer border hover:border-purple-500 transition hover:scale-[1.02]";
+                img.onclick = () => sendGifMessage(item.url);
+                grid.appendChild(img);
+            });
         }
 
         function sendGifMessage(gifUrl) {
