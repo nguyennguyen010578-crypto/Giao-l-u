@@ -123,39 +123,52 @@
         </div>
     </div>
 
-    <!-- MODAL TRANG CÁ NHÂN (VIEW PROFILE MODAL) -->
-    <div id="viewProfileModal" class="fixed inset-0 z-50 bg-slate-900/70 backdrop-blur-sm flex items-center justify-center p-4 hidden">
-        <div class="bg-white rounded-3xl shadow-2xl max-w-sm w-full p-6 space-y-6 border border-slate-100 text-center relative overflow-hidden">
-            <button onclick="closeViewProfileModal()" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600"><i class="fas fa-times text-lg"></i></button>
+    <!-- MODAL TRANG CÁ NHÂN TOÀN MÀN HÌNH (FULLSCREEN PROFILE VIEW) -->
+    <div id="viewProfileModal" class="fixed inset-0 z-50 bg-slate-900/80 backdrop-blur-md flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-3xl shadow-2xl max-w-lg w-full p-8 space-y-6 border border-slate-100 text-center relative overflow-hidden">
+            <button onclick="closeViewProfileModal()" class="absolute top-5 right-5 text-slate-400 hover:text-slate-600 bg-slate-100 hover:bg-slate-200 w-9 h-9 rounded-full flex items-center justify-center transition"><i class="fas fa-times text-base"></i></button>
 
-            <!-- Background Header Banner -->
-            <div class="h-20 bg-gradient-to-r from-emerald-500 to-indigo-600 -mx-6 -mt-6 rounded-t-3xl"></div>
+            <!-- Background Header Banner Lớn -->
+            <div class="h-32 bg-gradient-to-r from-emerald-500 to-indigo-600 -mx-8 -mt-8 rounded-t-3xl relative">
+                <div class="absolute inset-0 bg-black/10"></div>
+            </div>
 
-            <!-- Avatar -->
-            <div class="relative -mt-16 inline-block">
-                <img id="profileCardAvatar" src="" class="w-24 h-24 rounded-full object-cover border-4 border-white shadow-md mx-auto bg-white">
+            <!-- Avatar Lớn -->
+            <div class="relative -mt-20 inline-block">
+                <img id="profileCardAvatar" src="" class="w-32 h-32 rounded-full object-cover border-4 border-white shadow-xl mx-auto bg-white">
             </div>
 
             <!-- User Info -->
-            <div class="space-y-1">
-                <h3 id="profileCardName" class="font-bold text-lg text-slate-900"></h3>
-                <div id="profileBadgeSelf" class="hidden inline-block px-2.5 py-0.5 bg-emerald-100 text-emerald-700 font-bold text-[10px] rounded-full mt-1">Tài khoản của bạn</div>
+            <div class="space-y-1.5">
+                <h3 id="profileCardName" class="font-extrabold text-2xl text-slate-900"></h3>
+                <div id="profileBadgeSelf" class="hidden inline-block px-3 py-1 bg-emerald-100 text-emerald-700 font-bold text-xs rounded-full">Tài khoản của bạn</div>
             </div>
 
-            <!-- Stats -->
-            <div class="grid grid-cols-1 bg-slate-50 p-3 rounded-2xl border border-slate-100 text-xs">
+            <!-- Thống kê rộng rãi -->
+            <div class="grid grid-cols-3 bg-slate-50 p-4 rounded-2xl border border-slate-100 text-sm gap-2 shadow-inner">
                 <div>
-                    <span class="text-slate-400 block text-[10px] uppercase font-bold">Số tin nhắn đã gửi</span>
-                    <span id="profileCardMsgCount" class="font-extrabold text-slate-800 text-base">0</span>
+                    <span class="text-slate-400 block text-[11px] uppercase font-bold tracking-wider">Tin nhắn</span>
+                    <span id="profileCardMsgCount" class="font-extrabold text-slate-800 text-lg">0</span>
+                </div>
+                <div class="border-x border-slate-200">
+                    <span class="text-slate-400 block text-[11px] uppercase font-bold tracking-wider">Người theo dõi</span>
+                    <span id="profileCardFollowersCount" class="font-extrabold text-slate-800 text-lg">0</span>
+                </div>
+                <div>
+                    <span class="text-slate-400 block text-[11px] uppercase font-bold tracking-wider">Đang theo dõi</span>
+                    <span id="profileCardFollowingCount" class="font-extrabold text-slate-800 text-lg">0</span>
                 </div>
             </div>
 
             <!-- Actions -->
-            <div class="flex items-center justify-center gap-2 pt-2">
-                <button id="profileEditBtn" onclick="closeViewProfileModal(); openEditProfileModal();" class="hidden px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-bold text-xs shadow flex items-center gap-1.5">
+            <div class="flex items-center justify-center gap-3 pt-2">
+                <button id="profileFollowBtn" onclick="toggleFollowUser()" class="hidden px-6 py-2.5 rounded-xl font-bold text-sm shadow-md flex items-center gap-2 transition">
+                    <i class="fas fa-user-plus"></i> <span id="followBtnText">Theo dõi</span>
+                </button>
+                <button id="profileEditBtn" onclick="closeViewProfileModal(); openEditProfileModal();" class="hidden px-6 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-bold text-sm shadow-md flex items-center gap-2 transition">
                     <i class="fas fa-pen"></i> Chỉnh sửa hồ sơ
                 </button>
-                <button onclick="closeViewProfileModal()" class="px-5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-xl font-bold text-xs">Đóng</button>
+                <button onclick="closeViewProfileModal()" class="px-6 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl font-bold text-sm transition">Đóng</button>
             </div>
         </div>
     </div>
@@ -215,6 +228,7 @@
         let currentUser = null;
         let messages = [];
         let tempAvatarData = null;
+        let currentViewingEmail = null;
 
         function initApp() {
             try {
@@ -253,7 +267,6 @@
 
                 const googleUser = JSON.parse(jsonPayload);
                 
-                // Đọc thông tin hồ sơ tùy chỉnh đã lưu trước đó của email này (nếu có)
                 const userProfilesDB = JSON.parse(localStorage.getItem('user_profiles_db') || '{}');
                 const savedProfile = userProfilesDB[googleUser.email];
 
@@ -263,7 +276,6 @@
                     picture: (savedProfile && savedProfile.picture) ? savedProfile.picture : googleUser.picture
                 };
 
-                // Cập nhật lại cơ sở dữ liệu hồ sơ cá nhân
                 userProfilesDB[googleUser.email] = {
                     name: currentUser.name,
                     picture: currentUser.picture
@@ -301,7 +313,7 @@
         }
 
         function viewUserProfile(email, name, picture) {
-            // Lấy thông tin mới nhất từ database hồ sơ
+            currentViewingEmail = email;
             const userProfilesDB = JSON.parse(localStorage.getItem('user_profiles_db') || '{}');
             const targetProfile = userProfilesDB[email] || { name: name, picture: picture };
 
@@ -311,16 +323,75 @@
             const userMsgCount = messages.filter(m => m.email === email).length;
             document.getElementById('profileCardMsgCount').innerText = userMsgCount;
 
+            const followsDB = JSON.parse(localStorage.getItem('user_follows_db') || '{}');
+            
+            let followersCount = 0;
+            Object.keys(followsDB).forEach(followerEmail => {
+                if (followsDB[followerEmail] && followsDB[followerEmail].includes(email)) {
+                    followersCount++;
+                }
+            });
+            document.getElementById('profileCardFollowersCount').innerText = followersCount;
+
+            const followingCount = (followsDB[email] || []).length;
+            document.getElementById('profileCardFollowingCount').innerText = followingCount;
+
             const isSelf = currentUser && currentUser.email === email;
+            const followBtn = document.getElementById('profileFollowBtn');
+
             if (isSelf) {
                 document.getElementById('profileBadgeSelf').classList.remove('hidden');
                 document.getElementById('profileEditBtn').classList.remove('hidden');
+                followBtn.classList.add('hidden');
             } else {
                 document.getElementById('profileBadgeSelf').classList.add('hidden');
                 document.getElementById('profileEditBtn').classList.add('hidden');
+                followBtn.classList.remove('hidden');
+
+                const myFollowing = followsDB[currentUser ? currentUser.email : ''] || [];
+                const isFollowing = myFollowing.includes(email);
+                updateFollowBtnUI(isFollowing);
             }
 
             document.getElementById('viewProfileModal').classList.remove('hidden');
+        }
+
+        function updateFollowBtnUI(isFollowing) {
+            const btn = document.getElementById('profileFollowBtn');
+            const btnText = document.getElementById('followBtnText');
+
+            if (isFollowing) {
+                btn.className = "px-6 py-2.5 bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl font-bold text-sm shadow-md flex items-center gap-2 transition";
+                btnText.innerText = "Đang theo dõi";
+                btn.querySelector('i').className = "fas fa-check";
+            } else {
+                btn.className = "px-6 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-bold text-sm shadow-md flex items-center gap-2 transition";
+                btnText.innerText = "Theo dõi";
+                btn.querySelector('i').className = "fas fa-user-plus";
+            }
+        }
+
+        function toggleFollowUser() {
+            if (!currentUser) {
+                alert('Vui lòng đăng nhập để thực hiện theo dõi!');
+                return;
+            }
+            if (!currentViewingEmail || currentViewingEmail === currentUser.email) return;
+
+            const followsDB = JSON.parse(localStorage.getItem('user_follows_db') || '{}');
+            let myFollowing = followsDB[currentUser.email] || [];
+
+            const index = myFollowing.indexOf(currentViewingEmail);
+            if (index > -1) {
+                myFollowing.splice(index, 1);
+            } else {
+                myFollowing.push(currentViewingEmail);
+            }
+
+            followsDB[currentUser.email] = myFollowing;
+            localStorage.setItem('user_follows_db', JSON.stringify(followsDB));
+
+            viewUserProfile(currentViewingEmail, document.getElementById('profileCardName').innerText, document.getElementById('profileCardAvatar').src);
         }
 
         function closeViewProfileModal() {
@@ -366,7 +437,6 @@
             currentUser.name = newName;
             currentUser.picture = tempAvatarData;
 
-            // Lưu hồ sơ đã chỉnh sửa vào database local theo email
             const userProfilesDB = JSON.parse(localStorage.getItem('user_profiles_db') || '{}');
             userProfilesDB[currentUser.email] = {
                 name: currentUser.name,
@@ -446,7 +516,6 @@
                 const div = document.createElement('div');
                 div.className = "flex items-start gap-3";
                 
-                // Đồng bộ thông tin tên và avatar mới nhất
                 const profile = userProfilesDB[msg.email] || { name: msg.author, picture: msg.avatar };
                 const displayAuthor = profile.name;
                 const displayAvatar = profile.picture;
