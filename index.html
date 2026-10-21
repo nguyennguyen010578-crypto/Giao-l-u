@@ -74,8 +74,8 @@
                             <button onclick="triggerImageUpload()" class="hover:text-indigo-600 flex items-center gap-1 font-medium" title="Đính kèm ảnh">
                                 <i class="far fa-image text-emerald-500 text-base"></i> Đính kèm ảnh
                             </button>
-                            <button onclick="openGifModal()" class="hover:text-indigo-600 flex items-center gap-1 font-medium text-purple-600" title="Chọn GIF KLIPY">
-                                <i class="fas fa-search-location text-base"></i> Tìm GIF KLIPY
+                            <button onclick="openGifModal()" class="hover:text-indigo-600 flex items-center gap-1 font-medium text-purple-600" title="Chọn GIF">
+                                <i class="fas fa-search-location text-base"></i> Tìm GIF
                             </button>
                         </div>
 
@@ -126,12 +126,12 @@
         </div>
     </div>
 
-    <!-- MODAL TÌM KIẾM GIF KLIPY -->
+    <!-- MODAL TÌM KIẾM GIF -->
     <div id="gifModal" class="fixed inset-0 z-50 bg-slate-900/70 backdrop-blur-sm flex items-center justify-center p-4 hidden">
         <div class="bg-white rounded-3xl shadow-2xl max-w-md w-full p-6 space-y-4 border border-slate-100 relative">
             <div class="flex items-center justify-between border-b pb-3">
                 <h3 class="font-bold text-base text-slate-800 flex items-center gap-2">
-                    <i class="fas fa-film text-purple-600"></i> Tìm kiếm GIF (KLIPY)
+                    <i class="fas fa-film text-purple-600"></i> Tìm kiếm ảnh GIF
                 </h3>
                 <button onclick="closeGifModal()" class="text-slate-400 hover:text-slate-600"><i class="fas fa-times text-lg"></i></button>
             </div>
@@ -271,7 +271,6 @@
             updateUserUI();
             renderMessages();
 
-            // TỰ ĐỘNG CẬP NHẬT THỜI GIAN THỰC ĐỂ NHẬN TIN NHẮN MỚI
             setInterval(checkNewMessages, 1000);
             window.addEventListener('storage', checkNewMessages);
         }
@@ -356,7 +355,7 @@
             }
         }
 
-        // --- GIF KLIPY / TENOR SEARCH LOGIC ---
+        // --- GIPHY SEARCH LOGIC (THAY THẾ TENOR ĐÃ ĐÓNG CỬA) ---
         function openGifModal() {
             if (!currentUser) {
                 alert('Vui lòng đăng nhập Google để chọn GIF!');
@@ -376,17 +375,18 @@
                 const grid = document.getElementById('gifGrid');
                 grid.innerHTML = `<p class="col-span-2 text-center text-xs text-slate-400 py-6">Đang tìm kiếm GIF...</p>`;
 
+                const apiKey = 'dc6zaTOxFJmzC'; // Public Giphy API Key
                 const endpoint = query.trim() 
-                    ? `https://g.tenor.com/v1/search?q=${encodeURIComponent(query)}&key=LIVDSRZULEXM&limit=10`
-                    : `https://g.tenor.com/v1/trending?key=LIVDSRZULEXM&limit=10`;
+                    ? `https://api.giphy.com/v1/gifs/search?api_key=${apiKey}&q=${encodeURIComponent(query)}&limit=12`
+                    : `https://api.giphy.com/v1/gifs/trending?api_key=${apiKey}&limit=12`;
 
                 fetch(endpoint)
                     .then(res => res.json())
                     .then(data => {
                         grid.innerHTML = '';
-                        if (data.results && data.results.length > 0) {
-                            data.results.forEach(item => {
-                                const gifUrl = item.media[0].gif.url;
+                        if (data.data && data.data.length > 0) {
+                            data.data.forEach(item => {
+                                const gifUrl = item.images.fixed_height.url;
                                 const img = document.createElement('img');
                                 img.src = gifUrl;
                                 img.className = "w-full h-28 object-cover rounded-xl cursor-pointer border hover:border-purple-500 transition hover:scale-[1.02]";
@@ -623,7 +623,6 @@
             reader.readAsDataURL(file);
         }
 
-        // --- HIỂN THỊ TIN NHẮN TRÁI / PHẢI ---
         function renderMessages() {
             const container = document.getElementById('chatMessagesContainer');
             container.innerHTML = '';
@@ -635,7 +634,6 @@
                 const isMyMsg = currentUser && currentUser.email === msg.email;
                 const div = document.createElement('div');
                 
-                // Tùy chỉnh canh lề Trái/Phải
                 div.className = isMyMsg 
                     ? "flex items-start gap-3 flex-row-reverse justify-start" 
                     : "flex items-start gap-3 justify-start";
