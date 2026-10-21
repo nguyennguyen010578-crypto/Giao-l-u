@@ -4,6 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Kênh Giao Lưu Cộng Đồng - Google Login</title>
+    
+    <!-- FAVICON TRÁI ĐẤT TRẮNG ĐEN (SVG DATA URI) -->
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'><path fill='%23000000' d='M256 0c141.4 0 256 114.6 256 256S397.4 512 256 512 0 397.4 0 256 114.6 0 256 0zm-11.8 32C121 32 32 121 32 244.2c2.7-.1 5.4-.2 8.2-.2 38.3 0 71.9 22.3 88 54.8 6.4 13 18.2 22.2 32.2 25 14 2.8 28.5-2.2 37.8-13l21.2-24.8c10.4-12.1 26-19 42.1-18.6 16.1.4 31.3 8 40.7 20.6l23.5 31.3c8.9 11.9 23 18.9 37.8 18.9h41.1c25.8 0 46.7 20.9 46.7 46.7 0 11.8-4.5 23.2-12.6 31.8l-12.8 13.7c29.1-38.3 46.3-86.2 46.3-138.2 0-111.4-79.9-204.2-185.1-222.2z'/></svg>">
+
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Font Awesome Icons -->
@@ -24,10 +28,18 @@
 
         <div class="flex items-center gap-3">
             <div id="userProfileGroup" class="hidden flex items-center gap-2">
-                <div class="flex items-center gap-2 bg-slate-100 px-3 py-1.5 rounded-full border">
-                    <img id="userAvatarImg" src="" class="w-6 h-6 rounded-full object-cover" alt="Avatar">
-                    <span id="userNameText" class="font-bold text-xs text-slate-700"></span>
-                    <button onclick="handleLogout()" class="text-red-500 hover:text-red-700 text-xs ml-1" title="Đăng xuất"><i class="fas fa-right-from-bracket"></i> Đổi tài khoản</button>
+                <div class="flex items-center gap-2 bg-slate-100 px-3 py-1.5 rounded-full border border-slate-200">
+                    <img id="userAvatarImg" src="" class="w-7 h-7 rounded-full object-cover border" alt="Avatar">
+                    <div class="flex flex-col text-left">
+                        <span id="userNameText" class="font-bold text-xs text-slate-800 leading-tight"></span>
+                        <span id="userEmailText" class="text-[10px] text-slate-400"></span>
+                    </div>
+                    <button onclick="openEditProfileModal()" class="text-indigo-600 hover:text-indigo-800 text-xs ml-1 p-1" title="Chỉnh sửa hồ sơ">
+                        <i class="fas fa-pen"></i>
+                    </button>
+                    <button onclick="handleLogout()" class="text-red-500 hover:text-red-700 text-xs ml-1 p-1" title="Đăng xuất">
+                        <i class="fas fa-right-from-bracket"></i>
+                    </button>
                 </div>
             </div>
         </div>
@@ -46,7 +58,7 @@
                     <div>
                         <h2 class="font-bold text-xs text-slate-800">Phòng Trò Chuyện Trực Tuyến</h2>
                         <div class="text-[10px] text-emerald-600 font-semibold flex items-center gap-1">
-                            <span class="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></span> Trực tuyến với Gmail thật
+                            <span class="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></span> Tự động lưu tài khoản & Xóa tin nhắn sau 1 tháng
                         </div>
                     </div>
                 </div>
@@ -58,11 +70,13 @@
             <!-- Chat Input Box Area -->
             <div class="p-4 bg-white border-t border-slate-200">
                 <div class="bg-slate-50 border border-slate-200 rounded-2xl p-3 space-y-2 focus-within:border-indigo-500 transition">
-                    <textarea id="chatInputText" placeholder="Nhập tin nhắn giao lưu bằng tài khoản Google thật..." rows="2" class="w-full bg-transparent text-xs text-slate-800 placeholder-slate-400 outline-none resize-none"></textarea>
+                    <textarea id="chatInputText" placeholder="Nhập tin nhắn giao lưu..." rows="2" class="w-full bg-transparent text-xs text-slate-800 placeholder-slate-400 outline-none resize-none"></textarea>
                     
                     <div class="flex items-center justify-between pt-2 border-t border-slate-200/60 text-xs">
                         <div class="flex items-center gap-3 text-slate-500">
-                            <button onclick="triggerImageUpload()" class="hover:text-indigo-600 flex items-center gap-1" title="Đính kèm ảnh"><i class="far fa-image text-emerald-500 text-base"></i> Đính kèm ảnh</button>
+                            <button onclick="triggerImageUpload()" class="hover:text-indigo-600 flex items-center gap-1 font-medium" title="Đính kèm ảnh">
+                                <i class="far fa-image text-emerald-500 text-base"></i> Đính kèm ảnh
+                            </button>
                         </div>
 
                         <div class="flex items-center gap-3">
@@ -78,8 +92,9 @@
         </div>
     </main>
 
-    <!-- Hidden Input File để chọn ảnh -->
+    <!-- Hidden Input Files -->
     <input type="file" id="chatImageInput" accept="image/*" class="hidden" onchange="handleChatImage(event)">
+    <input type="file" id="avatarFileInput" accept="image/*" class="hidden" onchange="handleAvatarFileSelect(event)">
 
     <!-- GOOGLE AUTHENTICATION MODAL -->
     <div id="loginModal" class="fixed inset-0 z-50 bg-slate-900/70 backdrop-blur-sm flex items-center justify-center p-4">
@@ -93,7 +108,7 @@
                 <p class="text-xs text-slate-500">Đăng nhập bằng tài khoản Gmail thật của bạn để tham gia phòng chat</p>
             </div>
 
-            <!-- Nút đăng nhập Google chính thức (Google Sign-In Button Container) -->
+            <!-- Nút đăng nhập Google chính thức -->
             <div class="flex justify-center py-3">
                 <div id="g_id_onload"
                      data-client_id="474895252858-e9nkstvak3uj4p2r10jbr32st8m4rgqn.apps.googleusercontent.com"
@@ -112,13 +127,65 @@
         </div>
     </div>
 
+    <!-- MODAL CHỈNH SỬA TÊN VÀ AVATAR -->
+    <div id="editProfileModal" class="fixed inset-0 z-50 bg-slate-900/70 backdrop-blur-sm flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-3xl shadow-2xl max-w-sm w-full p-6 space-y-5 border border-slate-100">
+            <div class="flex items-center justify-between border-b pb-3">
+                <h3 class="font-bold text-base text-slate-800 flex items-center gap-2">
+                    <i class="fas fa-user-pen text-indigo-600"></i> Chỉnh sửa Hồ Sơ
+                </h3>
+                <button onclick="closeEditProfileModal()" class="text-slate-400 hover:text-slate-600"><i class="fas fa-times"></i></button>
+            </div>
+
+            <!-- Chỉnh sửa Avatar -->
+            <div class="flex flex-col items-center gap-3">
+                <div class="relative group cursor-pointer" onclick="document.getElementById('avatarFileInput').click()">
+                    <img id="editAvatarPreview" src="" class="w-20 h-20 rounded-full object-cover border-2 border-indigo-500 shadow">
+                    <div class="absolute inset-0 bg-black/40 rounded-full flex items-center justify-center text-white text-xs opacity-0 group-hover:opacity-100 transition">
+                        <i class="fas fa-camera text-base"></i>
+                    </div>
+                </div>
+                <button onclick="document.getElementById('avatarFileInput').click()" class="text-xs px-3 py-1 bg-indigo-50 text-indigo-600 hover:bg-indigo-100 rounded-lg font-semibold transition">
+                    <i class="fas fa-upload mr-1"></i> Tải ảnh từ thiết bị
+                </button>
+            </div>
+
+            <!-- Chọn Avatar có sẵn -->
+            <div>
+                <label class="block text-xs font-bold text-slate-600 mb-2">Hoặc chọn ảnh đại diện có sẵn:</label>
+                <div class="flex items-center justify-center gap-3 py-1">
+                    <img src="https://api.dicebear.com/7.x/bottts/svg?seed=Felix" onclick="selectPresetAvatar(this.src)" class="w-10 h-10 rounded-full cursor-pointer border-2 hover:border-indigo-500 transition hover:scale-105 bg-slate-100">
+                    <img src="https://api.dicebear.com/7.x/bottts/svg?seed=Aneka" onclick="selectPresetAvatar(this.src)" class="w-10 h-10 rounded-full cursor-pointer border-2 hover:border-indigo-500 transition hover:scale-105 bg-slate-100">
+                    <img src="https://api.dicebear.com/7.x/bottts/svg?seed=Zack" onclick="selectPresetAvatar(this.src)" class="w-10 h-10 rounded-full cursor-pointer border-2 hover:border-indigo-500 transition hover:scale-105 bg-slate-100">
+                    <img src="https://api.dicebear.com/7.x/bottts/svg?seed=Milo" onclick="selectPresetAvatar(this.src)" class="w-10 h-10 rounded-full cursor-pointer border-2 hover:border-indigo-500 transition hover:scale-105 bg-slate-100">
+                    <img src="https://api.dicebear.com/7.x/bottts/svg?seed=Luna" onclick="selectPresetAvatar(this.src)" class="w-10 h-10 rounded-full cursor-pointer border-2 hover:border-indigo-500 transition hover:scale-105 bg-slate-100">
+                </div>
+            </div>
+
+            <!-- Chỉnh sửa Tên -->
+            <div class="space-y-3">
+                <div>
+                    <label class="block text-xs font-bold text-slate-600 mb-1">Tên hiển thị:</label>
+                    <input type="text" id="editNameInput" class="w-full px-3 py-2 border rounded-xl text-xs outline-none focus:border-indigo-500 transition">
+                </div>
+            </div>
+
+            <div class="flex items-center justify-end gap-2 pt-2 border-t">
+                <button onclick="closeEditProfileModal()" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-xl font-bold text-xs">Hủy</button>
+                <button onclick="saveUserProfile()" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-bold text-xs shadow">Lưu thay đổi</button>
+            </div>
+        </div>
+    </div>
+
     <!-- JAVASCRIPT LOGIC -->
     <script>
         let currentUser = null;
         let messages = [];
+        let tempAvatarData = null;
 
         function initApp() {
             try {
+                // Kiểm tra tài khoản đã lưu
                 const savedUser = localStorage.getItem('real_google_chat_user');
                 if (savedUser) {
                     currentUser = JSON.parse(savedUser);
@@ -127,16 +194,25 @@
                     document.getElementById('loginModal').classList.remove('hidden');
                 }
 
+                // Tự động xóa tin nhắn cũ hơn 1 tháng (30 ngày)
                 const savedMsgs = localStorage.getItem('real_google_chat_stream');
-                if (savedMsgs) messages = JSON.parse(savedMsgs);
+                if (savedMsgs) {
+                    const allMessages = JSON.parse(savedMsgs);
+                    const now = Date.now();
+                    const oneMonthMs = 30 * 24 * 60 * 60 * 1000;
+
+                    messages = allMessages.filter(msg => (now - msg.id) < oneMonthMs);
+                    localStorage.setItem('real_google_chat_stream', JSON.stringify(messages));
+                }
             } catch(e) {}
+
             updateUserUI();
             renderMessages();
         }
 
         window.onload = initApp;
 
-        // Xử lý khi đăng nhập Google thành công trả về token credential
+        // Xử lý khi đăng nhập Google thành công
         function handleGoogleCredentialResponse(response) {
             try {
                 const base64Url = response.credential.split('.')[1];
@@ -172,17 +248,65 @@
         function updateUserUI() {
             const userGrp = document.getElementById('userProfileGroup');
             const nameTxt = document.getElementById('userNameText');
+            const emailTxt = document.getElementById('userEmailText');
             const avatarImg = document.getElementById('userAvatarImg');
 
             if (currentUser) {
                 userGrp.classList.remove('hidden');
-                nameTxt.innerText = `${currentUser.name} (${currentUser.email})`;
+                nameTxt.innerText = currentUser.name;
+                emailTxt.innerText = currentUser.email;
                 if(currentUser.picture) avatarImg.src = currentUser.picture;
             } else {
                 userGrp.classList.add('hidden');
             }
         }
 
+        // --- HÀM XỬ LÝ CHỈNH SỬA HỒ SƠ ---
+        function openEditProfileModal() {
+            if (!currentUser) return;
+            document.getElementById('editNameInput').value = currentUser.name;
+            document.getElementById('editAvatarPreview').src = currentUser.picture || '';
+            tempAvatarData = currentUser.picture;
+            document.getElementById('editProfileModal').classList.remove('hidden');
+        }
+
+        function closeEditProfileModal() {
+            document.getElementById('editProfileModal').classList.add('hidden');
+        }
+
+        function handleAvatarFileSelect(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                tempAvatarData = e.target.result;
+                document.getElementById('editAvatarPreview').src = tempAvatarData;
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function selectPresetAvatar(srcUrl) {
+            tempAvatarData = srcUrl;
+            document.getElementById('editAvatarPreview').src = srcUrl;
+        }
+
+        function saveUserProfile() {
+            const newName = document.getElementById('editNameInput').value.trim();
+            if (!newName) {
+                alert('Tên không được để trống!');
+                return;
+            }
+
+            currentUser.name = newName;
+            currentUser.picture = tempAvatarData;
+
+            localStorage.setItem('real_google_chat_user', JSON.stringify(currentUser));
+            updateUserUI();
+            closeEditProfileModal();
+        }
+
+        // --- CHAT LOGIC ---
         function sendChatMessage() {
             if (!currentUser) {
                 alert('Vui lòng đăng nhập Google để gửi tin nhắn!');
@@ -199,7 +323,7 @@
                 email: currentUser.email,
                 avatar: currentUser.picture || '',
                 content: text,
-                time: 'Vừa xong',
+                time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
                 type: 'text'
             });
 
@@ -229,7 +353,7 @@
                     email: currentUser.email,
                     avatar: currentUser.picture || '',
                     content: imageUrl,
-                    time: 'Vừa xong',
+                    time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
                     type: 'image'
                 });
                 localStorage.setItem('real_google_chat_stream', JSON.stringify(messages));
@@ -253,7 +377,7 @@
                 }
 
                 const avatarHtml = msg.avatar 
-                    ? `<img src="${msg.avatar}" class="w-8 h-8 rounded-full object-cover">` 
+                    ? `<img src="${msg.avatar}" class="w-8 h-8 rounded-full object-cover border">` 
                     : `<div class="w-8 h-8 bg-indigo-600 text-white rounded-full flex items-center justify-center font-bold text-xs">${msg.author.charAt(0).toUpperCase()}</div>`;
 
                 div.innerHTML = `
