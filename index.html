@@ -74,6 +74,9 @@
                             <button onclick="triggerImageUpload()" class="hover:text-indigo-600 flex items-center gap-1 font-medium" title="Đính kèm ảnh">
                                 <i class="far fa-image text-emerald-500 text-base"></i> Đính kèm ảnh
                             </button>
+                            <button onclick="openGifModal()" class="hover:text-indigo-600 flex items-center gap-1 font-medium text-purple-600" title="Chọn GIF">
+                                <i class="fas fa-gift text-base"></i> GIF
+                            </button>
                         </div>
 
                         <div class="flex items-center gap-3">
@@ -123,7 +126,28 @@
         </div>
     </div>
 
-    <!-- MODAL TRANG CÁ NHÂN TOÀN MÀN HÌNH (FULLSCREEN PROFILE VIEW) -->
+    <!-- MODAL CHỌN GIF -->
+    <div id="gifModal" class="fixed inset-0 z-50 bg-slate-900/70 backdrop-blur-sm flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-3xl shadow-2xl max-w-md w-full p-6 space-y-4 border border-slate-100 relative">
+            <div class="flex items-center justify-between border-b pb-3">
+                <h3 class="font-bold text-base text-slate-800 flex items-center gap-2">
+                    <i class="fas fa-gift text-purple-600"></i> Chọn ảnh GIF
+                </h3>
+                <button onclick="closeGifModal()" class="text-slate-400 hover:text-slate-600"><i class="fas fa-times text-lg"></i></button>
+            </div>
+
+            <div class="grid grid-cols-2 gap-3 max-h-80 overflow-y-auto p-1">
+                <img src="https://media.giphy.com/media/3o7TKSjRrfIPjeiOkM/giphy.gif" onclick="sendGifMessage(this.src)" class="w-full h-28 object-cover rounded-xl cursor-pointer border hover:border-purple-500 transition hover:scale-[1.02]">
+                <img src="https://media.giphy.com/media/l0HlNaQ6gWfllcjDO/giphy.gif" onclick="sendGifMessage(this.src)" class="w-full h-28 object-cover rounded-xl cursor-pointer border hover:border-purple-500 transition hover:scale-[1.02]">
+                <img src="https://media.giphy.com/media/xT9IgzoKnwFNmISR8I/giphy.gif" onclick="sendGifMessage(this.src)" class="w-full h-28 object-cover rounded-xl cursor-pointer border hover:border-purple-500 transition hover:scale-[1.02]">
+                <img src="https://media.giphy.com/media/26u4v35Q8Nm5qYCOs/giphy.gif" onclick="sendGifMessage(this.src)" class="w-full h-28 object-cover rounded-xl cursor-pointer border hover:border-purple-500 transition hover:scale-[1.02]">
+                <img src="https://media.giphy.com/media/3oEjI6SIIHBdRxXI40/giphy.gif" onclick="sendGifMessage(this.src)" class="w-full h-28 object-cover rounded-xl cursor-pointer border hover:border-purple-500 transition hover:scale-[1.02]">
+                <img src="https://media.giphy.com/media/111ebonMs90YLu/giphy.gif" onclick="sendGifMessage(this.src)" class="w-full h-28 object-cover rounded-xl cursor-pointer border hover:border-purple-500 transition hover:scale-[1.02]">
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL TRANG CÁ NHÂN TOÀN MÀN HÌNH -->
     <div id="viewProfileModal" class="fixed inset-0 z-50 bg-slate-900/80 backdrop-blur-md flex items-center justify-center p-4 hidden">
         <div class="bg-white rounded-3xl shadow-2xl max-w-lg w-full p-8 space-y-6 border border-slate-100 text-center relative overflow-hidden">
             <button onclick="closeViewProfileModal()" class="absolute top-5 right-5 text-slate-400 hover:text-slate-600 bg-slate-100 hover:bg-slate-200 w-9 h-9 rounded-full flex items-center justify-center transition"><i class="fas fa-times text-base"></i></button>
@@ -183,7 +207,6 @@
                 <button onclick="closeEditProfileModal()" class="text-slate-400 hover:text-slate-600"><i class="fas fa-times"></i></button>
             </div>
 
-            <!-- Chỉnh sửa Avatar -->
             <div class="flex flex-col items-center gap-3">
                 <div class="relative group cursor-pointer" onclick="document.getElementById('avatarFileInput').click()">
                     <img id="editAvatarPreview" src="" class="w-20 h-20 rounded-full object-cover border-2 border-indigo-500 shadow">
@@ -196,7 +219,6 @@
                 </button>
             </div>
 
-            <!-- Chọn Avatar có sẵn -->
             <div>
                 <label class="block text-xs font-bold text-slate-600 mb-2">Hoặc chọn ảnh đại diện có sẵn:</label>
                 <div class="flex items-center justify-center gap-3 py-1">
@@ -208,7 +230,6 @@
                 </div>
             </div>
 
-            <!-- Chỉnh sửa Tên -->
             <div class="space-y-3">
                 <div>
                     <label class="block text-xs font-bold text-slate-600 mb-1">Tên hiển thị:</label>
@@ -312,6 +333,38 @@
             }
         }
 
+        // --- GIF MODAL LOGIC ---
+        function openGifModal() {
+            if (!currentUser) {
+                alert('Vui lòng đăng nhập Google để chọn GIF!');
+                return;
+            }
+            document.getElementById('gifModal').classList.remove('hidden');
+        }
+
+        function closeGifModal() {
+            document.getElementById('gifModal').classList.add('hidden');
+        }
+
+        function sendGifMessage(gifUrl) {
+            if (!currentUser) return;
+
+            messages.push({
+                id: Date.now(),
+                author: currentUser.name,
+                email: currentUser.email,
+                avatar: currentUser.picture || '',
+                content: gifUrl,
+                time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+                type: 'gif'
+            });
+
+            localStorage.setItem('real_google_chat_stream', JSON.stringify(messages));
+            closeGifModal();
+            renderMessages();
+        }
+
+        // --- TRANG CÁ NHÂN & THEO DÕI ---
         function viewUserProfile(email, name, picture) {
             currentViewingEmail = email;
             const userProfilesDB = JSON.parse(localStorage.getItem('user_profiles_db') || '{}');
@@ -523,6 +576,8 @@
                 let bodyContent = `<div class="mt-1 bg-white border border-slate-200 rounded-xl px-4 py-2.5 text-xs text-slate-700 shadow-sm inline-block">${msg.content}</div>`;
                 if(msg.type === 'image') {
                     bodyContent = `<div class="mt-1"><img src="${msg.content}" class="max-w-[300px] rounded-xl border shadow-sm"></div>`;
+                } else if(msg.type === 'gif') {
+                    bodyContent = `<div class="mt-1"><img src="${msg.content}" class="max-w-[240px] rounded-xl border shadow-sm"></div>`;
                 }
 
                 const avatarHtml = displayAvatar 
