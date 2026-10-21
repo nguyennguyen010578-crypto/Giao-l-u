@@ -136,7 +136,7 @@
                 <img id="profileCardAvatar" src="" class="w-24 h-24 rounded-full object-cover border-4 border-white shadow-md mx-auto bg-white">
             </div>
 
-            <!-- User Info (Đã loại bỏ hiển thị email hoàn toàn) -->
+            <!-- User Info -->
             <div class="space-y-1">
                 <h3 id="profileCardName" class="font-bold text-lg text-slate-900"></h3>
                 <div id="profileBadgeSelf" class="hidden inline-block px-2.5 py-0.5 bg-emerald-100 text-emerald-700 font-bold text-[10px] rounded-full mt-1">Tài khoản của bạn</div>
@@ -253,11 +253,22 @@
 
                 const googleUser = JSON.parse(jsonPayload);
                 
+                // Đọc thông tin hồ sơ tùy chỉnh đã lưu trước đó của email này (nếu có)
+                const userProfilesDB = JSON.parse(localStorage.getItem('user_profiles_db') || '{}');
+                const savedProfile = userProfilesDB[googleUser.email];
+
                 currentUser = {
-                    name: googleUser.name,
+                    name: (savedProfile && savedProfile.name) ? savedProfile.name : googleUser.name,
                     email: googleUser.email,
-                    picture: googleUser.picture
+                    picture: (savedProfile && savedProfile.picture) ? savedProfile.picture : googleUser.picture
                 };
+
+                // Cập nhật lại cơ sở dữ liệu hồ sơ cá nhân
+                userProfilesDB[googleUser.email] = {
+                    name: currentUser.name,
+                    picture: currentUser.picture
+                };
+                localStorage.setItem('user_profiles_db', JSON.stringify(userProfilesDB));
 
                 localStorage.setItem('real_google_chat_user', JSON.stringify(currentUser));
                 document.getElementById('loginModal').classList.add('hidden');
@@ -290,8 +301,12 @@
         }
 
         function viewUserProfile(email, name, picture) {
-            document.getElementById('profileCardName').innerText = name;
-            document.getElementById('profileCardAvatar').src = picture || `https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(name)}`;
+            // Lấy thông tin mới nhất từ database hồ sơ
+            const userProfilesDB = JSON.parse(localStorage.getItem('user_profiles_db') || '{}');
+            const targetProfile = userProfilesDB[email] || { name: name, picture: picture };
+
+            document.getElementById('profileCardName').innerText = targetProfile.name;
+            document.getElementById('profileCardAvatar').src = targetProfile.picture || `https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(targetProfile.name)}`;
 
             const userMsgCount = messages.filter(m => m.email === email).length;
             document.getElementById('profileCardMsgCount').innerText = userMsgCount;
@@ -350,6 +365,14 @@
 
             currentUser.name = newName;
             currentUser.picture = tempAvatarData;
+
+            // Lưu hồ sơ đã chỉnh sửa vào database local theo email
+            const userProfilesDB = JSON.parse(localStorage.getItem('user_profiles_db') || '{}');
+            userProfilesDB[currentUser.email] = {
+                name: currentUser.name,
+                picture: currentUser.picture
+            };
+            localStorage.setItem('user_profiles_db', JSON.stringify(userProfilesDB));
 
             localStorage.setItem('real_google_chat_user', JSON.stringify(currentUser));
             updateUserUI();
@@ -417,24 +440,31 @@
             const container = document.getElementById('chatMessagesContainer');
             container.innerHTML = '';
 
+            const userProfilesDB = JSON.parse(localStorage.getItem('user_profiles_db') || '{}');
+
             messages.forEach(msg => {
                 const div = document.createElement('div');
                 div.className = "flex items-start gap-3";
                 
+                // Đồng bộ thông tin tên và avatar mới nhất
+                const profile = userProfilesDB[msg.email] || { name: msg.author, picture: msg.avatar };
+                const displayAuthor = profile.name;
+                const displayAvatar = profile.picture;
+
                 let bodyContent = `<div class="mt-1 bg-white border border-slate-200 rounded-xl px-4 py-2.5 text-xs text-slate-700 shadow-sm inline-block">${msg.content}</div>`;
                 if(msg.type === 'image') {
                     bodyContent = `<div class="mt-1"><img src="${msg.content}" class="max-w-[300px] rounded-xl border shadow-sm"></div>`;
                 }
 
-                const avatarHtml = msg.avatar 
-                    ? `<img src="${msg.avatar}" onclick="viewUserProfile('${msg.email}', '${msg.author.replace(/'/g, "\\'")}', '${msg.avatar}')" class="w-8 h-8 rounded-full object-cover border cursor-pointer hover:opacity-80 transition">` 
-                    : `<div onclick="viewUserProfile('${msg.email}', '${msg.author.replace(/'/g, "\\'")}', '')" class="w-8 h-8 bg-indigo-600 text-white rounded-full flex items-center justify-center font-bold text-xs cursor-pointer hover:opacity-80 transition">${msg.author.charAt(0).toUpperCase()}</div>`;
+                const avatarHtml = displayAvatar 
+                    ? `<img src="${displayAvatar}" onclick="viewUserProfile('${msg.email}', '${displayAuthor.replace(/'/g, "\\'")}', '${displayAvatar}')" class="w-8 h-8 rounded-full object-cover border cursor-pointer hover:opacity-80 transition">` 
+                    : `<div onclick="viewUserProfile('${msg.email}', '${displayAuthor.replace(/'/g, "\\'")}', '')" class="w-8 h-8 bg-indigo-600 text-white rounded-full flex items-center justify-center font-bold text-xs cursor-pointer hover:opacity-80 transition">${displayAuthor.charAt(0).toUpperCase()}</div>`;
 
                 div.innerHTML = `
                     ${avatarHtml}
                     <div>
                         <div class="flex items-center gap-2">
-                            <span onclick="viewUserProfile('${msg.email}', '${msg.author.replace(/'/g, "\\'")}', '${msg.avatar || ''}')" class="font-bold text-xs text-slate-800 hover:underline cursor-pointer">${msg.author}</span>
+                            <span onclick="viewUserProfile('${msg.email}', '${displayAuthor.replace(/'/g, "\\'")}', '${displayAvatar || ''}')" class="font-bold text-xs text-slate-800 hover:underline cursor-pointer">${displayAuthor}</span>
                             <span class="text-[10px] text-slate-400">${msg.time}</span>
                         </div>
                         ${bodyContent}
