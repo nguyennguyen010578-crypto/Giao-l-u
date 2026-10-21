@@ -144,7 +144,7 @@
 
             <!-- LƯỚI HIỂN THỊ KẾT QUẢ GIF -->
             <div id="gifGrid" class="grid grid-cols-2 gap-3 max-h-80 overflow-y-auto p-1">
-                <p class="col-span-2 text-center text-xs text-slate-400 py-6">Đang tải danh sách GIF...</p>
+                <p class="col-span-2 text-center text-xs text-slate-400 py-6">Đang tải GIF từ Klipy...</p>
             </div>
         </div>
     </div>
@@ -255,6 +255,9 @@
         let lastMsgLength = 0;
         let searchTimeout = null;
 
+        // API Key Klipy cá nhân của bạn
+        const klipyAppKey = "bk7DCC4zykHHo6BsHvx7EYpCVF3ZcljTcbIe9HtA0OJZEdIec6ZI4fqQrvo9zPK0";
+
         function initApp() {
             try {
                 const savedUser = localStorage.getItem('real_google_chat_user');
@@ -355,7 +358,7 @@
             }
         }
 
-        // --- TÍCH HỢP KLIPY API ---
+        // --- TÍCH HỢP TÌM KIẾM KLIPY API ---
         function openGifModal() {
             if (!currentUser) {
                 alert('Vui lòng đăng nhập Google để chọn GIF!');
@@ -376,7 +379,6 @@
                 const grid = document.getElementById('gifGrid');
                 grid.innerHTML = `<p class="col-span-2 text-center text-xs text-slate-400 py-6">Đang tải GIF từ Klipy...</p>`;
 
-                const klipyAppKey = "public"; // Hoặc thay bằng khóa API riêng của bạn
                 const endpoint = query.trim() 
                     ? `https://api.klipy.com/api/v1/${klipyAppKey}/gifs/search?page=1&per_page=12&q=${encodeURIComponent(query)}`
                     : `https://api.klipy.com/api/v1/${klipyAppKey}/gifs/trending?page=1&per_page=12`;
@@ -388,7 +390,7 @@
                         const items = data.data || data.results || [];
                         if (items.length > 0) {
                             items.forEach(item => {
-                                const gifUrl = item.files?.gif?.url || item.url;
+                                const gifUrl = item.files?.gif?.url || item.url || item.media?.[0]?.gif?.url;
                                 if (gifUrl) {
                                     const img = document.createElement('img');
                                     img.src = gifUrl;
