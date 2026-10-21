@@ -55,7 +55,7 @@
                     <div>
                         <h2 class="font-bold text-xs text-slate-800">Phòng Trò Chuyện Trực Tuyến</h2>
                         <div class="text-[10px] text-emerald-600 font-semibold flex items-center gap-1">
-                            <span class="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></span> Cập nhật tin nhắn thời gian thực
+                            <span class="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></span> Cập nhật tin nhắn thời gian thực & Tự xóa sau 30 ngày
                         </div>
                     </div>
                 </div>
@@ -143,9 +143,7 @@
             </div>
 
             <!-- LƯỚI HIỂN THỊ KẾT QUẢ GIF -->
-            <div id="gifGrid" class="grid grid-cols-2 gap-3 max-h-80 overflow-y-auto p-1">
-                <!-- Sẽ được điền tự động bằng JavaScript -->
-            </div>
+            <div id="gifGrid" class="grid grid-cols-2 gap-3 max-h-80 overflow-y-auto p-1"></div>
         </div>
     </div>
 
@@ -254,7 +252,6 @@
         let currentViewingEmail = null;
         let lastMsgLength = 0;
 
-        // DANH SÁCH KHO GIF ĐỘNG CHẤT LƯỢNG CAO PHỔ BIẾN
         const presetGifs = [
             { url: "https://media.giphy.com/media/3o7TKSjRrfIPjeiOkM/giphy.gif", tags: "vui cười haha funny" },
             { url: "https://media.giphy.com/media/l0HlNaQ6gWfllcjDO/giphy.gif", tags: "chào hello wave" },
@@ -368,7 +365,6 @@
             }
         }
 
-        // --- HỆ THỐNG KHO GIF HOẠT ĐỘNG ỔN ĐỊNH ---
         function openGifModal() {
             if (!currentUser) {
                 alert('Vui lòng đăng nhập Google để chọn GIF!');
@@ -427,7 +423,6 @@
             renderMessages();
         }
 
-        // --- TRANG CÁ NHÂN & THEO DÕI ---
         function viewUserProfile(email, name, picture) {
             currentViewingEmail = email;
             const userProfilesDB = JSON.parse(localStorage.getItem('user_profiles_db') || '{}');
