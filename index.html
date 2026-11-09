@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Kênh Giao Lưu Cộng Đồng - Google Login</title>
+    <title>Kênh Giao Lưu Cộng Đồng - Firebase Realtime</title>
     
     <!-- FAVICON TRÁI ĐẤT TRẮNG ĐEN (SVG DATA URI) -->
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'><path fill='%23000000' d='M256 0c141.4 0 256 114.6 256 256S397.4 512 256 512 0 397.4 0 256 114.6 0 256 0zm-11.8 32C121 32 32 121 32 244.2c2.7-.1 5.4-.2 8.2-.2 38.3 0 71.9 22.3 88 54.8 6.4 13 18.2 22.2 32.2 25 14 2.8 28.5-2.2 37.8-13l21.2-24.8c10.4-12.1 26-19 42.1-18.6 16.1.4 31.3 8 40.7 20.6l23.5 31.3c8.9 11.9 23 18.9 37.8 18.9h41.1c25.8 0 46.7 20.9 46.7 46.7 0 11.8-4.5 23.2-12.6 31.8l-12.8 13.7c29.1-38.3 46.3-86.2 46.3-138.2 0-111.4-79.9-204.2-185.1-222.2z'/></svg>">
@@ -14,6 +14,33 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <!-- Thư viện Google Identity Services SDK -->
     <script src="https://accounts.google.com/gsi/client" async defer></script>
+
+    <!-- FIREBASE SDK V10 -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getDatabase, ref, push, set, onValue, remove } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+
+        // CẤU HÌNH FIREBASE CỦA BẠN
+        const firebaseConfig = {
+            apiKey: "AIzaSyA8--ixFCWWvFGcIB4DpeXxigkTfci9Ltc",
+            authDomain: "congdongchat-7e672.firebaseapp.com",
+            databaseURL: "https://congdongchat-7e672-default-rtdb.firebaseio.com",
+            projectId: "congdongchat-7e672",
+            storageBucket: "congdongchat-7e672.firebasestorage.app",
+            messagingSenderId: "980712901607",
+            appId: "1:980712901607:web:41df5c8df406cda15c0b42"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+
+        window.fbDb = db;
+        window.fbRef = ref;
+        window.fbPush = push;
+        window.fbSet = set;
+        window.fbOnValue = onValue;
+        window.fbRemove = remove;
+    </script>
 </head>
 <body class="bg-slate-100 text-slate-800 h-screen flex flex-col font-sans select-none m-0 p-0">
 
@@ -46,7 +73,6 @@
     <main class="flex-1 p-4 max-w-4xl mx-auto w-full flex flex-col overflow-hidden">
         <div class="bg-white rounded-2xl shadow-sm border border-slate-200 flex flex-col flex-1 overflow-hidden">
             
-            <!-- Chat Room Header Info -->
             <div class="px-6 py-3 border-b border-slate-100 flex items-center justify-between bg-white">
                 <div class="flex items-center gap-3">
                     <div class="w-8 h-8 bg-emerald-100 text-emerald-600 rounded-lg flex items-center justify-center font-bold text-xs">
@@ -55,7 +81,7 @@
                     <div>
                         <h2 class="font-bold text-xs text-slate-800">Phòng Trò Chuyện Trực Tuyến</h2>
                         <div class="text-[10px] text-emerald-600 font-semibold flex items-center gap-1">
-                            <span class="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></span> Cập nhật tin nhắn thời gian thực & Tự xóa sau 30 ngày
+                            <span class="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></span> Đồng bộ Cloud Realtime & Tự xóa sau 30 ngày
                         </div>
                     </div>
                 </div>
@@ -92,7 +118,6 @@
         </div>
     </main>
 
-    <!-- Hidden Input Files -->
     <input type="file" id="chatImageInput" accept="image/*" class="hidden" onchange="handleChatImage(event)">
     <input type="file" id="avatarFileInput" accept="image/*" class="hidden" onchange="handleAvatarFileSelect(event)">
 
@@ -126,7 +151,7 @@
         </div>
     </div>
 
-    <!-- MODAL TÌM KIẾM VÀ CHỌN GIF KLIPY -->
+    <!-- MODAL TÌM KIẾM GIF KLIPY -->
     <div id="gifModal" class="fixed inset-0 z-50 bg-slate-900/70 backdrop-blur-sm flex items-center justify-center p-4 hidden">
         <div class="bg-white rounded-3xl shadow-2xl max-w-md w-full p-6 space-y-4 border border-slate-100 relative">
             <div class="flex items-center justify-between border-b pb-3">
@@ -136,13 +161,11 @@
                 <button onclick="closeGifModal()" class="text-slate-400 hover:text-slate-600"><i class="fas fa-times text-lg"></i></button>
             </div>
 
-            <!-- Ô TÌM KIẾM GIF -->
             <div class="flex items-center gap-2 bg-slate-100 px-3 py-2 rounded-xl border border-slate-200">
                 <i class="fas fa-search text-slate-400 text-xs"></i>
                 <input type="text" id="gifSearchInput" onkeyup="searchKlipyGifs(this.value)" placeholder="Nhập từ khóa tìm kiếm GIF..." class="w-full bg-transparent text-xs outline-none">
             </div>
 
-            <!-- LƯỚI HIỂN THỊ KẾT QUẢ GIF -->
             <div id="gifGrid" class="grid grid-cols-2 gap-3 max-h-80 overflow-y-auto p-1">
                 <p class="col-span-2 text-center text-xs text-slate-400 py-6">Đang tải GIF từ Klipy...</p>
             </div>
@@ -154,23 +177,19 @@
         <div class="bg-white rounded-3xl shadow-2xl max-w-lg w-full p-8 space-y-6 border border-slate-100 text-center relative overflow-hidden">
             <button onclick="closeViewProfileModal()" class="absolute top-5 right-5 text-slate-400 hover:text-slate-600 bg-slate-100 hover:bg-slate-200 w-9 h-9 rounded-full flex items-center justify-center transition"><i class="fas fa-times text-base"></i></button>
 
-            <!-- Background Header Banner Lớn -->
             <div class="h-32 bg-gradient-to-r from-emerald-500 to-indigo-600 -mx-8 -mt-8 rounded-t-3xl relative">
                 <div class="absolute inset-0 bg-black/10"></div>
             </div>
 
-            <!-- Avatar Lớn -->
             <div class="relative -mt-20 inline-block">
                 <img id="profileCardAvatar" src="" class="w-32 h-32 rounded-full object-cover border-4 border-white shadow-xl mx-auto bg-white">
             </div>
 
-            <!-- User Info -->
             <div class="space-y-1.5">
                 <h3 id="profileCardName" class="font-extrabold text-2xl text-slate-900"></h3>
                 <div id="profileBadgeSelf" class="hidden inline-block px-3 py-1 bg-emerald-100 text-emerald-700 font-bold text-xs rounded-full">Tài khoản của bạn</div>
             </div>
 
-            <!-- Thống kê rộng rãi -->
             <div class="grid grid-cols-3 bg-slate-50 p-4 rounded-2xl border border-slate-100 text-sm gap-2 shadow-inner">
                 <div>
                     <span class="text-slate-400 block text-[11px] uppercase font-bold tracking-wider">Tin nhắn</span>
@@ -186,7 +205,6 @@
                 </div>
             </div>
 
-            <!-- Actions -->
             <div class="flex items-center justify-center gap-3 pt-2">
                 <button id="profileFollowBtn" onclick="toggleFollowUser()" class="hidden px-6 py-2.5 rounded-xl font-bold text-sm shadow-md flex items-center gap-2 transition">
                     <i class="fas fa-user-plus"></i> <span id="followBtnText">Theo dõi</span>
@@ -252,10 +270,8 @@
         let messages = [];
         let tempAvatarData = null;
         let currentViewingEmail = null;
-        let lastMsgLength = 0;
         let searchTimeout = null;
 
-        // API Key Klipy cá nhân của bạn
         const klipyAppKey = "bk7DCC4zykHHo6BsHvx7EYpCVF3ZcljTcbIe9HtA0OJZEdIec6ZI4fqQrvo9zPK0";
 
         function initApp() {
@@ -267,40 +283,46 @@
                 } else {
                     document.getElementById('loginModal').classList.remove('hidden');
                 }
-
-                loadAndCleanMessages();
             } catch(e) {}
 
             updateUserUI();
-            renderMessages();
 
-            setInterval(checkNewMessages, 1000);
-            window.addEventListener('storage', checkNewMessages);
+            const checkDbInterval = setInterval(() => {
+                if (window.fbDb) {
+                    clearInterval(checkDbInterval);
+                    listenToFirebaseCloud();
+                }
+            }, 200);
         }
 
         window.onload = initApp;
 
-        function loadAndCleanMessages() {
-            const savedMsgs = localStorage.getItem('real_google_chat_stream');
-            if (savedMsgs) {
-                const allMessages = JSON.parse(savedMsgs);
-                const now = Date.now();
-                const oneMonthMs = 30 * 24 * 60 * 60 * 1000;
+        // ĐỒNG BỘ REALTIME & TỰ XÓA TIN NHẮN SAU 30 NGÀY CỦA FIREBASE
+        function listenToFirebaseCloud() {
+            const messagesRef = window.fbRef(window.fbDb, 'messages');
+            
+            window.fbOnValue(messagesRef, (snapshot) => {
+                const data = snapshot.val();
+                if (data) {
+                    const now = Date.now();
+                    const oneMonthMs = 30 * 24 * 60 * 60 * 1000;
+                    
+                    messages = [];
+                    Object.keys(data).forEach(key => {
+                        const msg = data[key];
+                        if (now - msg.id > oneMonthMs) {
+                            window.fbRemove(window.fbRef(window.fbDb, `messages/${key}`));
+                        } else {
+                            messages.push(msg);
+                        }
+                    });
 
-                messages = allMessages.filter(msg => (now - msg.id) < oneMonthMs);
-                localStorage.setItem('real_google_chat_stream', JSON.stringify(messages));
-            }
-        }
-
-        function checkNewMessages() {
-            const savedMsgs = localStorage.getItem('real_google_chat_stream');
-            if (savedMsgs) {
-                const parsedMsgs = JSON.parse(savedMsgs);
-                if (parsedMsgs.length !== lastMsgLength) {
-                    messages = parsedMsgs;
-                    renderMessages();
+                    messages.sort((a, b) => a.id - b.id);
+                } else {
+                    messages = [];
                 }
-            }
+                renderMessages();
+            });
         }
 
         function handleGoogleCredentialResponse(response) {
@@ -358,7 +380,6 @@
             }
         }
 
-        // --- TÍCH HỢP TÌM KIẾM KLIPY API ---
         function openGifModal() {
             if (!currentUser) {
                 alert('Vui lòng đăng nhập Google để chọn GIF!');
@@ -412,7 +433,7 @@
         function sendGifMessage(gifUrl) {
             if (!currentUser) return;
 
-            messages.push({
+            const newMsg = {
                 id: Date.now(),
                 author: currentUser.name,
                 email: currentUser.email,
@@ -420,11 +441,13 @@
                 content: gifUrl,
                 time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
                 type: 'gif'
-            });
+            };
 
-            localStorage.setItem('real_google_chat_stream', JSON.stringify(messages));
+            const messagesRef = window.fbRef(window.fbDb, 'messages');
+            const newMsgRef = window.fbPush(messagesRef);
+            window.fbSet(newMsgRef, newMsg);
+
             closeGifModal();
-            renderMessages();
         }
 
         function viewUserProfile(email, name, picture) {
@@ -582,7 +605,7 @@
             const text = input.value.trim();
             if(!text) return;
 
-            messages.push({
+            const newMsg = {
                 id: Date.now(),
                 author: currentUser.name,
                 email: currentUser.email,
@@ -590,11 +613,13 @@
                 content: text,
                 time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
                 type: 'text'
-            });
+            };
 
-            localStorage.setItem('real_google_chat_stream', JSON.stringify(messages));
+            const messagesRef = window.fbRef(window.fbDb, 'messages');
+            const newMsgRef = window.fbPush(messagesRef);
+            window.fbSet(newMsgRef, newMsg);
+
             input.value = '';
-            renderMessages();
         }
 
         function triggerImageUpload() {
@@ -612,7 +637,7 @@
             const reader = new FileReader();
             reader.onload = function(e) {
                 const imageUrl = e.target.result;
-                messages.push({
+                const newMsg = {
                     id: Date.now(),
                     author: currentUser.name,
                     email: currentUser.email,
@@ -620,9 +645,12 @@
                     content: imageUrl,
                     time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
                     type: 'image'
-                });
-                localStorage.setItem('real_google_chat_stream', JSON.stringify(messages));
-                renderMessages();
+                };
+
+                const messagesRef = window.fbRef(window.fbDb, 'messages');
+                const newMsgRef = window.fbPush(messagesRef);
+                window.fbSet(newMsgRef, newMsg);
+
                 event.target.value = '';
             };
             reader.readAsDataURL(file);
@@ -631,7 +659,6 @@
         function renderMessages() {
             const container = document.getElementById('chatMessagesContainer');
             container.innerHTML = '';
-            lastMsgLength = messages.length;
 
             const userProfilesDB = JSON.parse(localStorage.getItem('user_profiles_db') || '{}');
 
