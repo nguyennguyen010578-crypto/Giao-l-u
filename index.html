@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Kênh Giao Lưu Cộng Đồng - Full Screen Profile</title>
+    <title>Kênh Giao Lưu Cộng Đồng</title>
     
     <!-- FAVICON TRÁI ĐẤT TRẮNG ĐEN (SVG DATA URI) -->
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'><path fill='%23000000' d='M256 0c141.4 0 256 114.6 256 256S397.4 512 256 512 0 397.4 0 256 114.6 0 256 0zm-11.8 32C121 32 32 121 32 244.2c2.7-.1 5.4-.2 8.2-.2 38.3 0 71.9 22.3 88 54.8 6.4 13 18.2 22.2 32.2 25 14 2.8 28.5-2.2 37.8-13l21.2-24.8c10.4-12.1 26-19 42.1-18.6 16.1.4 31.3 8 40.7 20.6l23.5 31.3c8.9 11.9 23 18.9 37.8 18.9h41.1c25.8 0 46.7 20.9 46.7 46.7 0 11.8-4.5 23.2-12.6 31.8l-12.8 13.7c29.1-38.3 46.3-86.2 46.3-138.2 0-111.4-79.9-204.2-185.1-222.2z'/></svg>">
@@ -84,7 +84,7 @@
                     <div>
                         <h2 class="font-bold text-xs text-slate-800">Phòng Trò Chuyện Trực Tuyến</h2>
                         <div class="text-[10px] text-emerald-600 font-semibold flex items-center gap-1">
-                            <span class="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></span> Cloud Realtime & Full Screen Profile
+                            <span class="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></span> Đồng bộ Cloud Realtime & Tự xóa sau 30 ngày
                         </div>
                     </div>
                 </div>
@@ -219,16 +219,14 @@
 
     <!-- TRANG CÁ NHÂN BAO QUÁT TOÀN BỘ MÀN HÌNH (FULL SCREEN PROFILE) -->
     <div id="viewProfileModal" class="fixed inset-0 z-50 bg-white flex flex-col hidden overflow-y-auto">
-        <!-- Header điều hướng trang cá nhân -->
         <div class="h-16 border-b border-slate-200 px-6 flex items-center justify-between bg-white sticky top-0 z-20 shadow-sm">
             <button onclick="closeViewProfileModal()" class="flex items-center gap-2 text-slate-600 hover:text-slate-900 font-bold text-sm bg-slate-100 hover:bg-slate-200 px-4 py-2 rounded-xl transition">
                 <i class="fas fa-arrow-left"></i> Quay lại phòng chat
             </button>
             <span class="font-extrabold text-slate-800 text-base">Hồ Sơ Thành Viên</span>
-            <div class="w-24"></div> <!-- Cân bằng khoảng trống header -->
+            <div class="w-24"></div>
         </div>
 
-        <!-- Nội dung trang cá nhân phủ rộng toàn màn hình -->
         <div class="flex-1 max-w-2xl mx-auto w-full p-6 space-y-6 my-auto">
             <div class="h-44 bg-gradient-to-r from-emerald-500 to-indigo-600 rounded-3xl relative shadow-md">
                 <div class="absolute inset-0 bg-black/10 rounded-3xl"></div>
@@ -242,12 +240,9 @@
                 </div>
             </div>
 
-            <div class="grid grid-cols-3 bg-slate-50 p-5 rounded-3xl border border-slate-200 text-center gap-4 shadow-sm">
+            <!-- ĐỒNG BỘ DỮ LIỆU NGƯỜI THEO DÕI & ĐANG THEO DÕI REALTIME TỪ FIREBASE -->
+            <div class="grid grid-cols-2 bg-slate-50 p-5 rounded-3xl border border-slate-200 text-center divide-x divide-slate-200 shadow-sm">
                 <div>
-                    <span class="text-slate-400 block text-xs uppercase font-bold tracking-wider mb-1">Tin nhắn</span>
-                    <span id="profileCardMsgCount" class="font-extrabold text-slate-800 text-xl">0</span>
-                </div>
-                <div class="border-x border-slate-200">
                     <span class="text-slate-400 block text-xs uppercase font-bold tracking-wider mb-1">Người theo dõi</span>
                     <span id="profileCardFollowersCount" class="font-extrabold text-slate-800 text-xl">0</span>
                 </div>
@@ -322,6 +317,8 @@
         let messages = [];
         let adminsList = ['kietgame123'];
         let bannedUsersMap = {};
+        let cloudFollowsData = {}; // Lưu trữ toàn bộ dữ liệu theo dõi từ Firebase
+        let cloudProfilesData = {}; // Lưu trữ thông tin hồ sơ đồng bộ từ Firebase
         let tempAvatarData = null;
         let currentViewingEmail = null;
         let searchTimeout = null;
@@ -340,7 +337,6 @@
                     currentUser = JSON.parse(savedUser);
                     document.getElementById('loginModal').classList.add('hidden');
                     updateUserUI();
-                    trackUserPresence(currentUser);
                 } else {
                     document.getElementById('loginModal').classList.remove('hidden');
                 }
@@ -350,6 +346,7 @@
                 if (window.fbDb) {
                     clearInterval(checkDbInterval);
                     listenToFirebaseCloud();
+                    if (currentUser) syncUserProfileToCloud(currentUser);
                     checkUrlRouting();
                 }
             }, 200);
@@ -361,19 +358,30 @@
 
         window.onload = initApp;
 
+        function syncUserProfileToCloud(user) {
+            if (!user || !user.email || !window.fbDb) return;
+            const userKey = encodeFirebaseKey(user.email);
+            const profileRef = window.fbRef(window.fbDb, `user_profiles/${userKey}`);
+            window.fbSet(profileRef, {
+                name: user.name,
+                picture: user.picture || '',
+                email: user.email
+            });
+        }
+
         function checkUrlRouting() {
             const pathSegments = window.location.pathname.split('/').filter(Boolean);
             const userIndex = pathSegments.indexOf('user');
             if (userIndex !== -1 && pathSegments[userIndex + 1]) {
                 const accountName = decodeURIComponent(pathSegments[userIndex + 1]);
-                const userProfilesDB = JSON.parse(localStorage.getItem('user_profiles_db') || '{}');
                 let foundEmail = null;
                 let foundProfile = null;
 
-                for (let email in userProfilesDB) {
-                    if (userProfilesDB[email].name.toLowerCase() === accountName.toLowerCase() || email.toLowerCase() === accountName.toLowerCase()) {
-                        foundEmail = email;
-                        foundProfile = userProfilesDB[email];
+                for (let key in cloudProfilesData) {
+                    const p = cloudProfilesData[key];
+                    if (p.name.toLowerCase() === accountName.toLowerCase() || p.email.toLowerCase() === accountName.toLowerCase()) {
+                        foundEmail = p.email;
+                        foundProfile = p;
                         break;
                     }
                 }
@@ -388,17 +396,6 @@
             }
         }
 
-        function trackUserPresence(user) {
-            if (!user || !user.email) return;
-            const userProfilesDB = JSON.parse(localStorage.getItem('user_profiles_db') || '{}');
-            userProfilesDB[user.email] = {
-                name: user.name,
-                picture: user.picture || '',
-                email: user.email
-            };
-            localStorage.setItem('user_profiles_db', JSON.stringify(userProfilesDB));
-        }
-
         function checkIsAdmin(email, name) {
             if (!email) return false;
             const eLower = email.toLowerCase();
@@ -408,6 +405,7 @@
         }
 
         function listenToFirebaseCloud() {
+            // 1. Lắng nghe tin nhắn Realtime
             const messagesRef = window.fbRef(window.fbDb, 'messages');
             window.fbOnValue(messagesRef, (snapshot) => {
                 const data = snapshot.val();
@@ -423,22 +421,36 @@
                             window.fbRemove(window.fbRef(window.fbDb, `messages/${firebaseKey}`));
                         } else {
                             messages.push(msg);
-                            if (msg.email) {
-                                const userProfilesDB = JSON.parse(localStorage.getItem('user_profiles_db') || '{}');
-                                if (!userProfilesDB[msg.email]) {
-                                    userProfilesDB[msg.email] = { name: msg.author, picture: msg.avatar, email: msg.email };
-                                    localStorage.setItem('user_profiles_db', JSON.stringify(userProfilesDB));
-                                }
-                            }
                         }
                     });
                     messages.sort((a, b) => a.id - b.id);
                 }
                 renderMessages();
-            }, (error) => {
+            }, () => {
                 document.getElementById('chatMessagesContainer').innerHTML = `<div class="text-center text-xs text-red-500 py-6">Lỗi kết nối Firebase Rules. Hãy đảm bảo .read và .write là true!</div>`;
             });
 
+            // 2. Lắng nghe hồ sơ thành viên đồng bộ trên Cloud
+            const profilesRef = window.fbRef(window.fbDb, 'user_profiles');
+            window.fbOnValue(profilesRef, (snapshot) => {
+                cloudProfilesData = snapshot.val() || {};
+                renderMessages();
+                if (!document.getElementById('adminModal').classList.contains('hidden')) {
+                    renderAllUsersList();
+                }
+            });
+
+            // 3. Lắng nghe dữ liệu Theo dõi (Follows) đồng bộ trên Cloud Realtime
+            const followsRef = window.fbRef(window.fbDb, 'follows');
+            window.fbOnValue(followsRef, (snapshot) => {
+                cloudFollowsData = snapshot.val() || {};
+                // Nếu đang mở trang hồ sơ của ai đó, cập nhật số liệu theo dõi ngay lập tức
+                if (!document.getElementById('viewProfileModal').classList.contains('hidden') && currentViewingEmail) {
+                    updateProfileFollowCounts(currentViewingEmail);
+                }
+            });
+
+            // 4. Lắng nghe danh sách Admin
             const adminsRef = window.fbRef(window.fbDb, 'admins');
             window.fbOnValue(adminsRef, (snapshot) => {
                 const data = snapshot.val();
@@ -452,6 +464,7 @@
                 renderAdminList();
             });
 
+            // 5. Lắng nghe danh sách tài khoản bị cấm
             const bannedRef = window.fbRef(window.fbDb, 'banned_users');
             window.fbOnValue(bannedRef, (snapshot) => {
                 bannedUsersMap = snapshot.val() || {};
@@ -478,8 +491,8 @@
                     return;
                 }
 
-                const userProfilesDB = JSON.parse(localStorage.getItem('user_profiles_db') || '{}');
-                const savedProfile = userProfilesDB[googleUser.email];
+                const userKey = encodeFirebaseKey(googleUser.email);
+                const savedProfile = cloudProfilesData[userKey];
 
                 currentUser = {
                     name: (savedProfile && savedProfile.name) ? savedProfile.name : googleUser.name,
@@ -487,17 +500,10 @@
                     picture: (savedProfile && savedProfile.picture) ? savedProfile.picture : googleUser.picture
                 };
 
-                userProfilesDB[googleUser.email] = {
-                    name: currentUser.name,
-                    picture: currentUser.picture,
-                    email: currentUser.email
-                };
-                localStorage.setItem('user_profiles_db', JSON.stringify(userProfilesDB));
-
                 localStorage.setItem('real_google_chat_user', JSON.stringify(currentUser));
                 document.getElementById('loginModal').classList.add('hidden');
                 updateUserUI();
-                trackUserPresence(currentUser);
+                syncUserProfileToCloud(currentUser);
                 renderMessages();
             } catch (error) {
                 alert('Lỗi xác thực tài khoản Google!');
@@ -534,6 +540,7 @@
             }
         }
 
+        // --- QUẢN TRỊ ADMIN ---
         function openAdminModal() {
             if (!currentUser || !checkIsAdmin(currentUser.email, currentUser.name)) {
                 alert('Bạn không có quyền truy cập khu vực này!');
@@ -553,30 +560,29 @@
             const container = document.getElementById('allUsersListContainer');
             if (!container) return;
 
-            const userProfilesDB = JSON.parse(localStorage.getItem('user_profiles_db') || '{}');
-            const emails = Object.keys(userProfilesDB);
+            const keys = Object.keys(cloudProfilesData);
 
-            if (emails.length === 0) {
-                container.innerHTML = `<span class="text-slate-400 text-[11px]">Chưa ghi nhận tài khoản nào trong hệ thống.</span>`;
+            if (keys.length === 0) {
+                container.innerHTML = `<span class="text-slate-400 text-[11px]">Chưa ghi nhận tài khoản nào trên hệ thống.</span>`;
                 return;
             }
 
-            container.innerHTML = emails.map(email => {
-                const u = userProfilesDB[email];
-                const isAdmin = checkIsAdmin(email, u.name);
+            container.innerHTML = keys.map(k => {
+                const u = cloudProfilesData[k];
+                const isAdmin = checkIsAdmin(u.email, u.name);
                 const safeName = (u.name || '').replace(/'/g, "\\'");
 
                 return `
                     <div class="p-2 bg-slate-50 rounded-xl border flex items-center justify-between gap-2">
-                        <div class="flex items-center gap-2 overflow-hidden cursor-pointer hover:opacity-80" onclick="viewUserProfile('${email}', '${safeName}', '${u.picture || ''}')">
+                        <div class="flex items-center gap-2 overflow-hidden cursor-pointer hover:opacity-80" onclick="viewUserProfile('${u.email}', '${safeName}', '${u.picture || ''}')">
                             <img src="${u.picture || 'https://api.dicebear.com/7.x/bottts/svg?seed=' + u.name}" class="w-7 h-7 rounded-full object-cover border shrink-0">
                             <div class="truncate">
                                 <p class="font-bold text-xs text-slate-800 truncate">${u.name} ${isAdmin ? '<span class="text-[10px] bg-purple-100 text-purple-700 px-1.5 py-0.5 rounded font-bold">Admin</span>' : ''}</p>
-                                <p class="text-[10px] text-slate-400 truncate">${email}</p>
+                                <p class="text-[10px] text-slate-400 truncate">${u.email}</p>
                             </div>
                         </div>
                         <div class="flex items-center gap-1.5 shrink-0">
-                            <button onclick="quickBanFromList('${email}')" class="px-2 py-1 bg-red-50 hover:bg-red-100 text-red-600 rounded-lg text-[10px] font-bold transition">Cấm</button>
+                            <button onclick="quickBanFromList('${u.email}')" class="px-2 py-1 bg-red-50 hover:bg-red-100 text-red-600 rounded-lg text-[10px] font-bold transition">Cấm</button>
                         </div>
                     </div>
                 `;
@@ -695,6 +701,7 @@
             });
         }
 
+        // --- HỒ SƠ & ĐỒNG BỘ FOLLOW REALTIME ---
         function viewUserProfile(email, name, picture) {
             const basePath = window.location.pathname.replace(/\/user\/.*$/, '').replace(/\/$/, '');
             const newUrl = `${window.location.origin}${basePath}/user/${encodeURIComponent(name)}`;
@@ -705,22 +712,13 @@
 
         function openProfileModalRaw(email, name, picture) {
             currentViewingEmail = email;
-            const userProfilesDB = JSON.parse(localStorage.getItem('user_profiles_db') || '{}');
-            const targetProfile = userProfilesDB[email] || { name: name, picture: picture };
+            const userKey = encodeFirebaseKey(email);
+            const targetProfile = cloudProfilesData[userKey] || { name: name, picture: picture };
 
             document.getElementById('profileCardName').innerText = targetProfile.name;
             document.getElementById('profileCardAvatar').src = targetProfile.picture || `https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(targetProfile.name)}`;
 
-            const userMsgCount = messages.filter(m => m.email === email || m.author.toLowerCase() === name.toLowerCase()).length;
-            document.getElementById('profileCardMsgCount').innerText = userMsgCount;
-
-            const followsDB = JSON.parse(localStorage.getItem('user_follows_db') || '{}');
-            let followersCount = 0;
-            Object.keys(followsDB).forEach(followerEmail => {
-                if (followsDB[followerEmail] && followsDB[followerEmail].includes(email)) followersCount++;
-            });
-            document.getElementById('profileCardFollowersCount').innerText = followersCount;
-            document.getElementById('profileCardFollowingCount').innerText = (followsDB[email] || []).length;
+            updateProfileFollowCounts(email);
 
             const isSelf = currentUser && (currentUser.email === email || currentUser.name.toLowerCase() === name.toLowerCase());
             const followBtn = document.getElementById('profileFollowBtn');
@@ -733,12 +731,35 @@
                 document.getElementById('profileBadgeSelf').classList.add('hidden');
                 document.getElementById('profileEditBtn').classList.add('hidden');
                 followBtn.classList.remove('hidden');
-
-                const myFollowing = followsDB[currentUser ? currentUser.email : ''] || [];
-                updateFollowBtnUI(myFollowing.includes(email));
             }
 
             document.getElementById('viewProfileModal').classList.remove('hidden');
+        }
+
+        function updateProfileFollowCounts(targetEmail) {
+            const targetKey = encodeFirebaseKey(targetEmail);
+            
+            // Đếm số lượng người đang theo dõi targetEmail (Followers)
+            let followersCount = 0;
+            Object.keys(cloudFollowsData).forEach(followerKey => {
+                if (cloudFollowsData[followerKey] && cloudFollowsData[followerKey][targetKey]) {
+                    followersCount++;
+                }
+            });
+
+            // Đếm số lượng người mà targetEmail đang theo dõi (Following)
+            const targetFollowingObj = cloudFollowsData[targetKey] || {};
+            const followingCount = Object.keys(targetFollowingObj).length;
+
+            document.getElementById('profileCardFollowersCount').innerText = followersCount;
+            document.getElementById('profileCardFollowingCount').innerText = followingCount;
+
+            // Cập nhật trạng thái nút "Theo dõi" / "Đang theo dõi"
+            if (currentUser && currentUser.email !== targetEmail) {
+                const myKey = encodeFirebaseKey(currentUser.email);
+                const isFollowing = cloudFollowsData[myKey] && cloudFollowsData[myKey][targetKey] ? true : false;
+                updateFollowBtnUI(isFollowing);
+            }
         }
 
         function closeViewProfileModal() {
@@ -775,15 +796,19 @@
             if (!currentUser) return alert('Vui lòng đăng nhập để thực hiện theo dõi!');
             if (!currentViewingEmail || currentViewingEmail === currentUser.email) return;
 
-            const followsDB = JSON.parse(localStorage.getItem('user_follows_db') || '{}');
-            let myFollowing = followsDB[currentUser.email] || [];
-            const index = myFollowing.indexOf(currentViewingEmail);
-            if (index > -1) myFollowing.splice(index, 1);
-            else myFollowing.push(currentViewingEmail);
+            const myKey = encodeFirebaseKey(currentUser.email);
+            const targetKey = encodeFirebaseKey(currentViewingEmail);
 
-            followsDB[currentUser.email] = myFollowing;
-            localStorage.setItem('user_follows_db', JSON.stringify(followsDB));
-            viewUserProfile(currentViewingEmail, document.getElementById('profileCardName').innerText, document.getElementById('profileCardAvatar').src);
+            const isCurrentlyFollowing = cloudFollowsData[myKey] && cloudFollowsData[myKey][targetKey];
+            const followNodeRef = window.fbRef(window.fbDb, `follows/${myKey}/${targetKey}`);
+
+            if (isCurrentlyFollowing) {
+                // Bỏ theo dõi -> Xóa khỏi Firebase
+                window.fbRemove(followNodeRef);
+            } else {
+                // Theo dõi -> Lưu lên Firebase
+                window.fbSet(followNodeRef, true);
+            }
         }
 
         function openEditProfileModal() {
@@ -821,10 +846,8 @@
             currentUser.name = newName;
             currentUser.picture = tempAvatarData;
 
-            const userProfilesDB = JSON.parse(localStorage.getItem('user_profiles_db') || '{}');
-            userProfilesDB[currentUser.email] = { name: currentUser.name, picture: currentUser.picture, email: currentUser.email };
-            localStorage.setItem('user_profiles_db', JSON.stringify(userProfilesDB));
             localStorage.setItem('real_google_chat_user', JSON.stringify(currentUser));
+            syncUserProfileToCloud(currentUser);
 
             updateUserUI();
             closeEditProfileModal();
@@ -968,7 +991,6 @@
                 return;
             }
 
-            const userProfilesDB = JSON.parse(localStorage.getItem('user_profiles_db') || '{}');
             const isAdmin = currentUser ? checkIsAdmin(currentUser.email, currentUser.name) : false;
 
             messages.forEach(msg => {
@@ -977,7 +999,8 @@
                 div.id = "msg_box_" + msg.firebaseKey;
                 div.className = isMyMsg ? "flex items-start gap-3 flex-row-reverse justify-start group relative" : "flex items-start gap-3 justify-start group relative";
 
-                const profile = userProfilesDB[msg.email] || { name: msg.author, picture: msg.avatar };
+                const userKey = encodeFirebaseKey(msg.email || '');
+                const profile = cloudProfilesData[userKey] || { name: msg.author, picture: msg.avatar };
                 const displayAuthor = profile.name;
                 const displayAvatar = profile.picture;
 
