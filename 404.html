@@ -1,0 +1,1036 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kênh Giao Lưu Cộng Đồng - Full Screen Profile</title>
+    
+    <!-- FAVICON TRÁI ĐẤT TRẮNG ĐEN (SVG DATA URI) -->
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'><path fill='%23000000' d='M256 0c141.4 0 256 114.6 256 256S397.4 512 256 512 0 397.4 0 256 114.6 0 256 0zm-11.8 32C121 32 32 121 32 244.2c2.7-.1 5.4-.2 8.2-.2 38.3 0 71.9 22.3 88 54.8 6.4 13 18.2 22.2 32.2 25 14 2.8 28.5-2.2 37.8-13l21.2-24.8c10.4-12.1 26-19 42.1-18.6 16.1.4 31.3 8 40.7 20.6l23.5 31.3c8.9 11.9 23 18.9 37.8 18.9h41.1c25.8 0 46.7 20.9 46.7 46.7 0 11.8-4.5 23.2-12.6 31.8l-12.8 13.7c29.1-38.3 46.3-86.2 46.3-138.2 0-111.4-79.9-204.2-185.1-222.2z'/></svg>">
+
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Thư viện Google Identity Services SDK -->
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+
+    <!-- FIREBASE SDK V10 -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getDatabase, ref, push, set, onValue, remove } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyA8--ixFCWWvFGcIB4DpeXxigkTfci9Ltc",
+            authDomain: "congdongchat-7e672.firebaseapp.com",
+            databaseURL: "https://congdongchat-7e672-default-rtdb.firebaseio.com",
+            projectId: "congdongchat-7e672",
+            storageBucket: "congdongchat-7e672.firebasestorage.app",
+            messagingSenderId: "980712901607",
+            appId: "1:980712901607:web:41df5c8df406cda15c0b42"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+
+        window.fbDb = db;
+        window.fbRef = ref;
+        window.fbPush = push;
+        window.fbSet = set;
+        window.fbOnValue = onValue;
+        window.fbRemove = remove;
+    </script>
+</head>
+<body class="bg-slate-100 text-slate-800 h-screen flex flex-col font-sans select-none m-0 p-0">
+
+    <!-- TOP HEADER -->
+    <header class="bg-white border-b border-slate-200 h-14 flex items-center justify-between px-6 z-30 shadow-sm">
+        <div class="flex items-center gap-3">
+            <div class="w-9 h-9 bg-emerald-600 text-white rounded-xl flex items-center justify-center font-bold shadow">
+                <i class="fas fa-comments"></i>
+            </div>
+            <span class="font-extrabold text-base text-slate-900 cursor-pointer" onclick="goHome()">Kênh Giao Lưu Cộng Đồng</span>
+        </div>
+
+        <div class="flex items-center gap-3">
+            <button id="adminSettingBtn" onclick="openAdminModal()" class="hidden text-purple-600 hover:text-purple-800 text-xs px-3 py-1.5 rounded-full bg-purple-50 hover:bg-purple-100 font-bold transition flex items-center gap-1.5 shadow-sm">
+                <i class="fas fa-shield-alt"></i> Cài đặt Admin
+            </button>
+
+            <div id="userProfileGroup" class="hidden flex items-center gap-2">
+                <div class="flex items-center gap-2 bg-slate-100 px-3 py-1.5 rounded-full border border-slate-200 hover:bg-slate-200/60 transition cursor-pointer" onclick="viewUserProfile(currentUser.email, currentUser.name, currentUser.picture)">
+                    <img id="userAvatarImg" src="" class="w-7 h-7 rounded-full object-cover border" alt="Avatar">
+                    <span id="userNameText" class="font-bold text-xs text-slate-800"></span>
+                </div>
+                <button onclick="event.stopPropagation(); openEditProfileModal()" class="text-indigo-600 hover:text-indigo-800 text-xs p-2 rounded-full hover:bg-slate-200 transition" title="Chỉnh sửa hồ sơ">
+                    <i class="fas fa-pen"></i>
+                </button>
+                <button onclick="event.stopPropagation(); handleLogout()" class="text-red-500 hover:text-red-700 text-xs p-2 rounded-full hover:bg-slate-200 transition" title="Đăng xuất">
+                    <i class="fas fa-right-from-bracket"></i>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- MAIN CHAT CONTAINER -->
+    <main class="flex-1 p-4 max-w-4xl mx-auto w-full flex flex-col overflow-hidden">
+        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 flex flex-col flex-1 overflow-hidden">
+            
+            <div class="px-6 py-3 border-b border-slate-100 flex items-center justify-between bg-white">
+                <div class="flex items-center gap-3">
+                    <div class="w-8 h-8 bg-emerald-100 text-emerald-600 rounded-lg flex items-center justify-center font-bold text-xs">
+                        <i class="fas fa-globe"></i>
+                    </div>
+                    <div>
+                        <h2 class="font-bold text-xs text-slate-800">Phòng Trò Chuyện Trực Tuyến</h2>
+                        <div class="text-[10px] text-emerald-600 font-semibold flex items-center gap-1">
+                            <span class="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></span> Cloud Realtime & Full Screen Profile
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="chatMessagesContainer" class="flex-1 p-6 overflow-y-auto space-y-4 bg-slate-50/50">
+                <div class="text-center text-xs text-slate-400 py-10">Đang tải tin nhắn...</div>
+            </div>
+
+            <div id="replyPreviewContainer" class="hidden px-4 pt-2 bg-white border-t border-slate-100 flex items-center justify-between text-xs">
+                <div class="flex items-center gap-2 text-slate-600 border-l-4 border-indigo-500 pl-2 py-0.5 truncate">
+                    <span class="font-bold text-indigo-600">Đang trả lời <span id="replyingToName"></span>:</span>
+                    <span id="replyingToText" class="text-slate-500 truncate max-w-md"></span>
+                </div>
+                <button onclick="cancelReply()" class="text-slate-400 hover:text-slate-600 px-2 py-1"><i class="fas fa-times"></i></button>
+            </div>
+
+            <div class="p-4 bg-white border-t border-slate-200">
+                <div class="bg-slate-50 border border-slate-200 rounded-2xl p-3 space-y-2 focus-within:border-indigo-500 transition">
+                    <textarea id="chatInputText" onkeydown="handleKeySend(event)" placeholder="Nhập tin nhắn giao lưu... (Nhấn Enter để gửi)" rows="2" class="w-full bg-transparent text-xs text-slate-800 placeholder-slate-400 outline-none resize-none"></textarea>
+                    
+                    <div class="flex items-center justify-between pt-2 border-t border-slate-200/60 text-xs">
+                        <div class="flex items-center gap-3 text-slate-500">
+                            <button onclick="triggerImageUpload()" class="hover:text-indigo-600 flex items-center gap-1 font-medium" title="Đính kèm ảnh">
+                                <i class="far fa-image text-emerald-500 text-base"></i> Đính kèm ảnh
+                            </button>
+                            <button onclick="openGifModal()" class="hover:text-indigo-600 flex items-center gap-1 font-medium text-purple-600" title="Chọn GIF Klipy">
+                                <i class="fas fa-film text-base"></i> Kho GIF Klipy
+                            </button>
+                        </div>
+
+                        <div class="flex items-center gap-3">
+                            <span class="text-[10px] text-slate-400">Enter ↵</span>
+                            <button onclick="sendChatMessage()" class="px-4 py-1.5 bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl font-bold shadow transition text-xs flex items-center gap-1.5">
+                                <i class="fas fa-paper-plane"></i> Gửi
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <input type="file" id="chatImageInput" accept="image/*" class="hidden" onchange="handleChatImage(event)">
+    <input type="file" id="avatarFileInput" accept="image/*" class="hidden" onchange="handleAvatarFileSelect(event)">
+
+    <!-- GOOGLE AUTHENTICATION MODAL -->
+    <div id="loginModal" class="fixed inset-0 z-50 bg-slate-900/70 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="bg-white rounded-3xl shadow-2xl max-w-sm w-full p-8 space-y-6 border border-slate-100 text-center">
+            <div class="w-14 h-14 bg-indigo-50 text-indigo-600 rounded-2xl mx-auto flex items-center justify-center text-2xl shadow mb-2">
+                <i class="fab fa-google"></i>
+            </div>
+            <div class="space-y-1">
+                <h3 class="font-bold text-xl text-slate-800">Xác thực tài khoản Google</h3>
+                <p class="text-xs text-slate-500">Đăng nhập bằng tài khoản Gmail thật của bạn để tham gia phòng chat</p>
+            </div>
+            <div class="flex justify-center py-3">
+                <div id="g_id_onload"
+                     data-client_id="474895252858-e9nkstvak3uj4p2r10jbr32st8m4rgqn.apps.googleusercontent.com"
+                     data-callback="handleGoogleCredentialResponse"
+                     data-auto_prompt="false">
+                </div>
+                <div class="g_id_signin" data-type="standard" data-size="large" data-theme="outline" data-text="sign_in_with" data-shape="pill" data-logo_alignment="left"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL CÀI ĐẶT ADMIN -->
+    <div id="adminModal" class="fixed inset-0 z-50 bg-slate-900/70 backdrop-blur-sm flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-3xl shadow-2xl max-w-lg w-full p-6 space-y-5 border border-slate-100 max-h-[90vh] overflow-y-auto">
+            <div class="flex items-center justify-between border-b pb-3">
+                <h3 class="font-bold text-base text-slate-800 flex items-center gap-2">
+                    <i class="fas fa-shield-alt text-purple-600"></i> Quản Trị Hệ Thống (Admin)
+                </h3>
+                <button onclick="closeAdminModal()" class="text-slate-400 hover:text-slate-600"><i class="fas fa-times text-lg"></i></button>
+            </div>
+            <div class="space-y-4">
+                <div class="bg-slate-50 p-3.5 rounded-2xl border space-y-2">
+                    <label class="block text-xs font-bold text-slate-700"><i class="fas fa-users text-blue-600"></i> Danh sách tài khoản đã tham gia:</label>
+                    <div id="allUsersListContainer" class="bg-white p-2 rounded-xl text-xs text-slate-700 max-h-36 overflow-y-auto space-y-1.5 border">
+                        <span class="text-slate-400 text-[11px]">Đang tải danh sách tài khoản...</span>
+                    </div>
+                </div>
+                <div class="bg-slate-50 p-3.5 rounded-2xl border space-y-2">
+                    <label class="block text-xs font-bold text-slate-700"><i class="fas fa-user-plus text-indigo-600"></i> Bổ nhiệm Admin mới:</label>
+                    <div class="flex gap-2">
+                        <input type="text" id="newAdminInput" placeholder="Nhập email hoặc tên tài khoản..." class="w-full px-3 py-2 border rounded-xl text-xs outline-none focus:border-purple-500">
+                        <button onclick="addNewAdmin()" class="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-xl text-xs font-bold shadow shrink-0">Cấp quyền</button>
+                    </div>
+                </div>
+                <div class="bg-slate-50 p-3.5 rounded-2xl border space-y-2">
+                    <label class="block text-xs font-bold text-slate-700"><i class="fas fa-ban text-red-500"></i> Cấm (Ban) tài khoản người dùng:</label>
+                    <div class="flex gap-2">
+                        <input type="text" id="banEmailInput" placeholder="Nhập email tài khoản cần cấm..." class="w-full px-3 py-2 border rounded-xl text-xs outline-none focus:border-red-500">
+                        <button onclick="banUserAccount()" class="px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-xl text-xs font-bold shadow shrink-0">Cấm ngay</button>
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-600 mb-1">Danh sách Admin hiện tại:</label>
+                    <div id="adminListContainer" class="bg-slate-100 p-3 rounded-xl text-xs text-slate-700 max-h-24 overflow-y-auto space-y-1"></div>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-600 mb-1">Danh sách tài khoản đang bị cấm:</label>
+                    <div id="bannedListContainer" class="bg-red-50/70 p-3 rounded-xl text-xs text-red-700 max-h-24 overflow-y-auto space-y-1"></div>
+                </div>
+            </div>
+            <div class="flex justify-end pt-2 border-t">
+                <button onclick="closeAdminModal()" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl font-bold text-xs">Đóng</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL TÌM KIẾM GIF KLIPY -->
+    <div id="gifModal" class="fixed inset-0 z-50 bg-slate-900/70 backdrop-blur-sm flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-3xl shadow-2xl max-w-md w-full p-6 space-y-4 border border-slate-100 relative">
+            <div class="flex items-center justify-between border-b pb-3">
+                <h3 class="font-bold text-base text-slate-800 flex items-center gap-2">
+                    <i class="fas fa-film text-purple-600"></i> Tìm kiếm GIF (Klipy)
+                </h3>
+                <button onclick="closeGifModal()" class="text-slate-400 hover:text-slate-600"><i class="fas fa-times text-lg"></i></button>
+            </div>
+            <div class="flex items-center gap-2 bg-slate-100 px-3 py-2 rounded-xl border border-slate-200">
+                <i class="fas fa-search text-slate-400 text-xs"></i>
+                <input type="text" id="gifSearchInput" onkeyup="searchKlipyGifs(this.value)" placeholder="Nhập từ khóa tìm kiếm GIF..." class="w-full bg-transparent text-xs outline-none">
+            </div>
+            <div id="gifGrid" class="grid grid-cols-2 gap-3 max-h-80 overflow-y-auto p-1">
+                <p class="col-span-2 text-center text-xs text-slate-400 py-6">Đang tải GIF từ Klipy...</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- TRANG CÁ NHÂN BAO QUÁT TOÀN BỘ MÀN HÌNH (FULL SCREEN PROFILE) -->
+    <div id="viewProfileModal" class="fixed inset-0 z-50 bg-white flex flex-col hidden overflow-y-auto">
+        <!-- Header điều hướng trang cá nhân -->
+        <div class="h-16 border-b border-slate-200 px-6 flex items-center justify-between bg-white sticky top-0 z-20 shadow-sm">
+            <button onclick="closeViewProfileModal()" class="flex items-center gap-2 text-slate-600 hover:text-slate-900 font-bold text-sm bg-slate-100 hover:bg-slate-200 px-4 py-2 rounded-xl transition">
+                <i class="fas fa-arrow-left"></i> Quay lại phòng chat
+            </button>
+            <span class="font-extrabold text-slate-800 text-base">Hồ Sơ Thành Viên</span>
+            <div class="w-24"></div> <!-- Cân bằng khoảng trống header -->
+        </div>
+
+        <!-- Nội dung trang cá nhân phủ rộng toàn màn hình -->
+        <div class="flex-1 max-w-2xl mx-auto w-full p-6 space-y-6 my-auto">
+            <div class="h-44 bg-gradient-to-r from-emerald-500 to-indigo-600 rounded-3xl relative shadow-md">
+                <div class="absolute inset-0 bg-black/10 rounded-3xl"></div>
+            </div>
+
+            <div class="relative -mt-24 text-center space-y-3">
+                <img id="profileCardAvatar" src="" class="w-36 h-36 rounded-full object-cover border-4 border-white shadow-2xl mx-auto bg-white">
+                <div class="space-y-1">
+                    <h3 id="profileCardName" class="font-extrabold text-3xl text-slate-900"></h3>
+                    <div id="profileBadgeSelf" class="hidden inline-block px-3 py-1 bg-emerald-100 text-emerald-700 font-bold text-xs rounded-full">Tài khoản của bạn</div>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-3 bg-slate-50 p-5 rounded-3xl border border-slate-200 text-center gap-4 shadow-sm">
+                <div>
+                    <span class="text-slate-400 block text-xs uppercase font-bold tracking-wider mb-1">Tin nhắn</span>
+                    <span id="profileCardMsgCount" class="font-extrabold text-slate-800 text-xl">0</span>
+                </div>
+                <div class="border-x border-slate-200">
+                    <span class="text-slate-400 block text-xs uppercase font-bold tracking-wider mb-1">Người theo dõi</span>
+                    <span id="profileCardFollowersCount" class="font-extrabold text-slate-800 text-xl">0</span>
+                </div>
+                <div>
+                    <span class="text-slate-400 block text-xs uppercase font-bold tracking-wider mb-1">Đang theo dõi</span>
+                    <span id="profileCardFollowingCount" class="font-extrabold text-slate-800 text-xl">0</span>
+                </div>
+            </div>
+
+            <div class="flex items-center justify-center gap-4 pt-4">
+                <button id="profileFollowBtn" onclick="toggleFollowUser()" class="hidden px-8 py-3 rounded-2xl font-bold text-sm shadow-md flex items-center gap-2 transition">
+                    <i class="fas fa-user-plus"></i> <span id="followBtnText">Theo dõi</span>
+                </button>
+                <button id="profileEditBtn" onclick="closeViewProfileModal(); openEditProfileModal();" class="hidden px-8 py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-2xl font-bold text-sm shadow-md flex items-center gap-2 transition">
+                    <i class="fas fa-pen"></i> Chỉnh sửa hồ sơ
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL CHỈNH SỬA TÊN VÀ AVATAR -->
+    <div id="editProfileModal" class="fixed inset-0 z-50 bg-slate-900/70 backdrop-blur-sm flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-3xl shadow-2xl max-w-sm w-full p-6 space-y-5 border border-slate-100">
+            <div class="flex items-center justify-between border-b pb-3">
+                <h3 class="font-bold text-base text-slate-800 flex items-center gap-2">
+                    <i class="fas fa-user-pen text-indigo-600"></i> Chỉnh sửa Hồ Sơ
+                </h3>
+                <button onclick="closeEditProfileModal()" class="text-slate-400 hover:text-slate-600"><i class="fas fa-times"></i></button>
+            </div>
+
+            <div class="flex flex-col items-center gap-3">
+                <div class="relative group cursor-pointer" onclick="document.getElementById('avatarFileInput').click()">
+                    <img id="editAvatarPreview" src="" class="w-20 h-20 rounded-full object-cover border-2 border-indigo-500 shadow">
+                    <div class="absolute inset-0 bg-black/40 rounded-full flex items-center justify-center text-white text-xs opacity-0 group-hover:opacity-100 transition">
+                        <i class="fas fa-camera text-base"></i>
+                    </div>
+                </div>
+                <button onclick="document.getElementById('avatarFileInput').click()" class="text-xs px-3 py-1 bg-indigo-50 text-indigo-600 hover:bg-indigo-100 rounded-lg font-semibold transition">
+                    <i class="fas fa-upload mr-1"></i> Tải ảnh từ thiết bị
+                </button>
+            </div>
+
+            <div>
+                <label class="block text-xs font-bold text-slate-600 mb-2">Hoặc chọn ảnh đại diện có sẵn:</label>
+                <div class="flex items-center justify-center gap-3 py-1">
+                    <img src="https://api.dicebear.com/7.x/bottts/svg?seed=Felix" onclick="selectPresetAvatar(this.src)" class="w-10 h-10 rounded-full cursor-pointer border-2 hover:border-indigo-500 transition hover:scale-105 bg-slate-100">
+                    <img src="https://api.dicebear.com/7.x/bottts/svg?seed=Aneka" onclick="selectPresetAvatar(this.src)" class="w-10 h-10 rounded-full cursor-pointer border-2 hover:border-indigo-500 transition hover:scale-105 bg-slate-100">
+                    <img src="https://api.dicebear.com/7.x/bottts/svg?seed=Zack" onclick="selectPresetAvatar(this.src)" class="w-10 h-10 rounded-full cursor-pointer border-2 hover:border-indigo-500 transition hover:scale-105 bg-slate-100">
+                    <img src="https://api.dicebear.com/7.x/bottts/svg?seed=Milo" onclick="selectPresetAvatar(this.src)" class="w-10 h-10 rounded-full cursor-pointer border-2 hover:border-indigo-500 transition hover:scale-105 bg-slate-100">
+                    <img src="https://api.dicebear.com/7.x/bottts/svg?seed=Luna" onclick="selectPresetAvatar(this.src)" class="w-10 h-10 rounded-full cursor-pointer border-2 hover:border-indigo-500 transition hover:scale-105 bg-slate-100">
+                </div>
+            </div>
+
+            <div class="space-y-3">
+                <div>
+                    <label class="block text-xs font-bold text-slate-600 mb-1">Tên hiển thị:</label>
+                    <input type="text" id="editNameInput" class="w-full px-3 py-2 border rounded-xl text-xs outline-none focus:border-indigo-500 transition">
+                </div>
+            </div>
+
+            <div class="flex items-center justify-end gap-2 pt-2 border-t">
+                <button onclick="closeEditProfileModal()" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-xl font-bold text-xs">Hủy</button>
+                <button onclick="saveUserProfile()" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-bold text-xs shadow">Lưu thay đổi</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- JAVASCRIPT LOGIC -->
+    <script>
+        let currentUser = null;
+        let messagesObj = {};
+        let messages = [];
+        let adminsList = ['kietgame123'];
+        let bannedUsersMap = {};
+        let tempAvatarData = null;
+        let currentViewingEmail = null;
+        let searchTimeout = null;
+        let replyingTo = null;
+
+        const klipyAppKey = "bk7DCC4zykHHo6BsHvx7EYpCVF3ZcljTcbIe9HtA0OJZEdIec6ZI4fqQrvo9zPK0";
+
+        function encodeFirebaseKey(str) {
+            return str.toLowerCase().replace(/\./g, '_dot_').replace(/@/g, '_at_').replace(/[#$\[\]\/]/g, '_');
+        }
+
+        function initApp() {
+            try {
+                const savedUser = localStorage.getItem('real_google_chat_user');
+                if (savedUser) {
+                    currentUser = JSON.parse(savedUser);
+                    document.getElementById('loginModal').classList.add('hidden');
+                    updateUserUI();
+                    trackUserPresence(currentUser);
+                } else {
+                    document.getElementById('loginModal').classList.remove('hidden');
+                }
+            } catch(e) {}
+
+            const checkDbInterval = setInterval(() => {
+                if (window.fbDb) {
+                    clearInterval(checkDbInterval);
+                    listenToFirebaseCloud();
+                    checkUrlRouting();
+                }
+            }, 200);
+
+            window.onpopstate = function() {
+                checkUrlRouting();
+            };
+        }
+
+        window.onload = initApp;
+
+        function checkUrlRouting() {
+            const pathSegments = window.location.pathname.split('/').filter(Boolean);
+            const userIndex = pathSegments.indexOf('user');
+            if (userIndex !== -1 && pathSegments[userIndex + 1]) {
+                const accountName = decodeURIComponent(pathSegments[userIndex + 1]);
+                const userProfilesDB = JSON.parse(localStorage.getItem('user_profiles_db') || '{}');
+                let foundEmail = null;
+                let foundProfile = null;
+
+                for (let email in userProfilesDB) {
+                    if (userProfilesDB[email].name.toLowerCase() === accountName.toLowerCase() || email.toLowerCase() === accountName.toLowerCase()) {
+                        foundEmail = email;
+                        foundProfile = userProfilesDB[email];
+                        break;
+                    }
+                }
+
+                if (foundProfile) {
+                    openProfileModalRaw(foundEmail, foundProfile.name, foundProfile.picture);
+                } else {
+                    openProfileModalRaw(accountName, accountName, '');
+                }
+            } else {
+                closeViewProfileModalSilently();
+            }
+        }
+
+        function trackUserPresence(user) {
+            if (!user || !user.email) return;
+            const userProfilesDB = JSON.parse(localStorage.getItem('user_profiles_db') || '{}');
+            userProfilesDB[user.email] = {
+                name: user.name,
+                picture: user.picture || '',
+                email: user.email
+            };
+            localStorage.setItem('user_profiles_db', JSON.stringify(userProfilesDB));
+        }
+
+        function checkIsAdmin(email, name) {
+            if (!email) return false;
+            const eLower = email.toLowerCase();
+            const nLower = (name || '').toLowerCase();
+            if (eLower.includes('kietgame123') || nLower.includes('kietgame123')) return true;
+            return adminsList.some(a => a.toLowerCase() === eLower || a.toLowerCase() === nLower);
+        }
+
+        function listenToFirebaseCloud() {
+            const messagesRef = window.fbRef(window.fbDb, 'messages');
+            window.fbOnValue(messagesRef, (snapshot) => {
+                const data = snapshot.val();
+                messagesObj = data || {};
+                messages = [];
+                if (data) {
+                    const now = Date.now();
+                    const oneMonthMs = 30 * 24 * 60 * 60 * 1000;
+                    Object.keys(data).forEach(firebaseKey => {
+                        const msg = data[firebaseKey];
+                        msg.firebaseKey = firebaseKey;
+                        if (now - msg.id > oneMonthMs) {
+                            window.fbRemove(window.fbRef(window.fbDb, `messages/${firebaseKey}`));
+                        } else {
+                            messages.push(msg);
+                            if (msg.email) {
+                                const userProfilesDB = JSON.parse(localStorage.getItem('user_profiles_db') || '{}');
+                                if (!userProfilesDB[msg.email]) {
+                                    userProfilesDB[msg.email] = { name: msg.author, picture: msg.avatar, email: msg.email };
+                                    localStorage.setItem('user_profiles_db', JSON.stringify(userProfilesDB));
+                                }
+                            }
+                        }
+                    });
+                    messages.sort((a, b) => a.id - b.id);
+                }
+                renderMessages();
+            }, (error) => {
+                document.getElementById('chatMessagesContainer').innerHTML = `<div class="text-center text-xs text-red-500 py-6">Lỗi kết nối Firebase Rules. Hãy đảm bảo .read và .write là true!</div>`;
+            });
+
+            const adminsRef = window.fbRef(window.fbDb, 'admins');
+            window.fbOnValue(adminsRef, (snapshot) => {
+                const data = snapshot.val();
+                adminsList = ['kietgame123'];
+                if (data) {
+                    Object.values(data).forEach(val => {
+                        if (!adminsList.includes(val)) adminsList.push(val);
+                    });
+                }
+                updateUserUI();
+                renderAdminList();
+            });
+
+            const bannedRef = window.fbRef(window.fbDb, 'banned_users');
+            window.fbOnValue(bannedRef, (snapshot) => {
+                bannedUsersMap = snapshot.val() || {};
+                renderBannedList();
+                if (currentUser && bannedUsersMap[encodeFirebaseKey(currentUser.email)]) {
+                    alert('Tài khoản của bạn đã bị quản trị viên cấm truy cập!');
+                    handleLogout();
+                }
+            });
+        }
+
+        function handleGoogleCredentialResponse(response) {
+            try {
+                const base64Url = response.credential.split('.')[1];
+                const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+                const jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
+                    return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+                }).join(''));
+
+                const googleUser = JSON.parse(jsonPayload);
+
+                if (bannedUsersMap[encodeFirebaseKey(googleUser.email)]) {
+                    alert('Tài khoản này đã bị quản trị viên cấm! Vui lòng đăng nhập bằng tài khoản khác.');
+                    return;
+                }
+
+                const userProfilesDB = JSON.parse(localStorage.getItem('user_profiles_db') || '{}');
+                const savedProfile = userProfilesDB[googleUser.email];
+
+                currentUser = {
+                    name: (savedProfile && savedProfile.name) ? savedProfile.name : googleUser.name,
+                    email: googleUser.email,
+                    picture: (savedProfile && savedProfile.picture) ? savedProfile.picture : googleUser.picture
+                };
+
+                userProfilesDB[googleUser.email] = {
+                    name: currentUser.name,
+                    picture: currentUser.picture,
+                    email: currentUser.email
+                };
+                localStorage.setItem('user_profiles_db', JSON.stringify(userProfilesDB));
+
+                localStorage.setItem('real_google_chat_user', JSON.stringify(currentUser));
+                document.getElementById('loginModal').classList.add('hidden');
+                updateUserUI();
+                trackUserPresence(currentUser);
+                renderMessages();
+            } catch (error) {
+                alert('Lỗi xác thực tài khoản Google!');
+            }
+        }
+
+        function handleLogout() {
+            localStorage.removeItem('real_google_chat_user');
+            currentUser = null;
+            document.getElementById('loginModal').classList.remove('hidden');
+            document.getElementById('adminSettingBtn').classList.add('hidden');
+            updateUserUI();
+        }
+
+        function updateUserUI() {
+            const userGrp = document.getElementById('userProfileGroup');
+            const nameTxt = document.getElementById('userNameText');
+            const avatarImg = document.getElementById('userAvatarImg');
+            const adminBtn = document.getElementById('adminSettingBtn');
+
+            if (currentUser) {
+                userGrp.classList.remove('hidden');
+                nameTxt.innerText = currentUser.name;
+                if(currentUser.picture) avatarImg.src = currentUser.picture;
+
+                if (checkIsAdmin(currentUser.email, currentUser.name)) {
+                    adminBtn.classList.remove('hidden');
+                } else {
+                    adminBtn.classList.add('hidden');
+                }
+            } else {
+                userGrp.classList.add('hidden');
+                adminBtn.classList.add('hidden');
+            }
+        }
+
+        function openAdminModal() {
+            if (!currentUser || !checkIsAdmin(currentUser.email, currentUser.name)) {
+                alert('Bạn không có quyền truy cập khu vực này!');
+                return;
+            }
+            renderAllUsersList();
+            renderAdminList();
+            renderBannedList();
+            document.getElementById('adminModal').classList.remove('hidden');
+        }
+
+        function closeAdminModal() {
+            document.getElementById('adminModal').classList.add('hidden');
+        }
+
+        function renderAllUsersList() {
+            const container = document.getElementById('allUsersListContainer');
+            if (!container) return;
+
+            const userProfilesDB = JSON.parse(localStorage.getItem('user_profiles_db') || '{}');
+            const emails = Object.keys(userProfilesDB);
+
+            if (emails.length === 0) {
+                container.innerHTML = `<span class="text-slate-400 text-[11px]">Chưa ghi nhận tài khoản nào trong hệ thống.</span>`;
+                return;
+            }
+
+            container.innerHTML = emails.map(email => {
+                const u = userProfilesDB[email];
+                const isAdmin = checkIsAdmin(email, u.name);
+                const safeName = (u.name || '').replace(/'/g, "\\'");
+
+                return `
+                    <div class="p-2 bg-slate-50 rounded-xl border flex items-center justify-between gap-2">
+                        <div class="flex items-center gap-2 overflow-hidden cursor-pointer hover:opacity-80" onclick="viewUserProfile('${email}', '${safeName}', '${u.picture || ''}')">
+                            <img src="${u.picture || 'https://api.dicebear.com/7.x/bottts/svg?seed=' + u.name}" class="w-7 h-7 rounded-full object-cover border shrink-0">
+                            <div class="truncate">
+                                <p class="font-bold text-xs text-slate-800 truncate">${u.name} ${isAdmin ? '<span class="text-[10px] bg-purple-100 text-purple-700 px-1.5 py-0.5 rounded font-bold">Admin</span>' : ''}</p>
+                                <p class="text-[10px] text-slate-400 truncate">${email}</p>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-1.5 shrink-0">
+                            <button onclick="quickBanFromList('${email}')" class="px-2 py-1 bg-red-50 hover:bg-red-100 text-red-600 rounded-lg text-[10px] font-bold transition">Cấm</button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function quickBanFromList(email) {
+            if (email.includes('kietgame123')) {
+                alert('Không thể cấm Admin gốc!');
+                return;
+            }
+            if (confirm(`Bạn có chắc chắn muốn cấm tài khoản ${email} không?`)) {
+                const banRef = window.fbRef(window.fbDb, `banned_users/${encodeFirebaseKey(email)}`);
+                window.fbSet(banRef, email).then(() => {
+                    alert(`Đã cấm thành công ${email}!`);
+                    renderAllUsersList();
+                });
+            }
+        }
+
+        function addNewAdmin() {
+            const val = document.getElementById('newAdminInput').value.trim().toLowerCase();
+            if (!val) return alert('Vui lòng nhập email hoặc tên tài khoản!');
+
+            const adminRef = window.fbRef(window.fbDb, `admins/${encodeFirebaseKey(val)}`);
+            window.fbSet(adminRef, val).then(() => {
+                alert('Đã cấp quyền Admin thành công cho: ' + val);
+                document.getElementById('newAdminInput').value = '';
+                renderAllUsersList();
+            });
+        }
+
+        function removeAdmin(val) {
+            if (val === 'kietgame123') return alert('Không thể gỡ quyền Admin gốc!');
+            const adminRef = window.fbRef(window.fbDb, `admins/${encodeFirebaseKey(val)}`);
+            window.fbRemove(adminRef);
+        }
+
+        function renderAdminList() {
+            const container = document.getElementById('adminListContainer');
+            if (!container) return;
+            container.innerHTML = adminsList.map(acc => `
+                <div class="py-1 px-2 bg-white rounded border flex justify-between items-center">
+                    <span>${acc}</span>
+                    ${acc !== 'kietgame123' ? `<button onclick="removeAdmin('${acc}')" class="text-red-500 hover:underline text-[10px]">Gỡ</button>` : `<span class="text-[10px] text-purple-600 font-bold">Gốc</span>`}
+                </div>
+            `).join('');
+        }
+
+        function banUserAccount() {
+            const emailToBan = document.getElementById('banEmailInput').value.trim().toLowerCase();
+            if (!emailToBan) return alert('Vui lòng nhập email tài khoản cần cấm!');
+            if (emailToBan.includes('kietgame123')) return alert('Không thể cấm tài khoản Admin gốc!');
+
+            const banRef = window.fbRef(window.fbDb, `banned_users/${encodeFirebaseKey(emailToBan)}`);
+            window.fbSet(banRef, emailToBan).then(() => {
+                alert(`Đã cấm thành công tài khoản ${emailToBan}!`);
+                document.getElementById('banEmailInput').value = '';
+                renderAllUsersList();
+            });
+        }
+
+        function unbanUser(key) {
+            const banRef = window.fbRef(window.fbDb, `banned_users/${key}`);
+            window.fbRemove(banRef).then(() => {
+                renderAllUsersList();
+            });
+        }
+
+        function renderBannedList() {
+            const container = document.getElementById('bannedListContainer');
+            if (!container) return;
+            const keys = Object.keys(bannedUsersMap);
+            if (keys.length === 0) {
+                container.innerHTML = `<span class="text-slate-400">Chưa có tài khoản nào bị cấm.</span>`;
+                return;
+            }
+            container.innerHTML = keys.map(k => `
+                <div class="py-1 px-2 bg-white rounded border border-red-200 flex justify-between items-center">
+                    <span>${bannedUsersMap[k]}</span>
+                    <button onclick="unbanUser('${k}')" class="text-emerald-600 hover:underline text-[10px] font-bold">Gỡ cấm</button>
+                </div>
+            `).join('');
+        }
+
+        function deleteMessage(firebaseKey) {
+            if (confirm("Bạn có chắc chắn muốn xóa tin nhắn này không?")) {
+                const msgRef = window.fbRef(window.fbDb, `messages/${firebaseKey}`);
+                window.fbRemove(msgRef).catch(() => {
+                    alert("Không thể xóa tin nhắn!");
+                });
+            }
+        }
+
+        function replyToMessage(firebaseKey, author, content) {
+            replyingTo = {
+                firebaseKey: firebaseKey,
+                author: author,
+                content: content.length > 40 ? content.substring(0, 40) + '...' : content
+            };
+            document.getElementById('replyingToName').innerText = author;
+            document.getElementById('replyingToText').innerText = content;
+            document.getElementById('replyPreviewContainer').classList.remove('hidden');
+            document.getElementById('chatInputText').focus();
+        }
+
+        function cancelReply() {
+            replyingTo = null;
+            document.getElementById('replyPreviewContainer').classList.add('hidden');
+        }
+
+        function copyMessageLink(firebaseKey) {
+            const url = window.location.origin + window.location.pathname.replace(/\/user\/.*$/, '') + "#msg_" + firebaseKey;
+            navigator.clipboard.writeText(url).then(() => {
+                alert("Đã sao chép đường dẫn tin nhắn vào bộ nhớ tạm!");
+            });
+        }
+
+        function viewUserProfile(email, name, picture) {
+            const basePath = window.location.pathname.replace(/\/user\/.*$/, '').replace(/\/$/, '');
+            const newUrl = `${window.location.origin}${basePath}/user/${encodeURIComponent(name)}`;
+            history.pushState({ profile: name }, "", newUrl);
+
+            openProfileModalRaw(email, name, picture);
+        }
+
+        function openProfileModalRaw(email, name, picture) {
+            currentViewingEmail = email;
+            const userProfilesDB = JSON.parse(localStorage.getItem('user_profiles_db') || '{}');
+            const targetProfile = userProfilesDB[email] || { name: name, picture: picture };
+
+            document.getElementById('profileCardName').innerText = targetProfile.name;
+            document.getElementById('profileCardAvatar').src = targetProfile.picture || `https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(targetProfile.name)}`;
+
+            const userMsgCount = messages.filter(m => m.email === email || m.author.toLowerCase() === name.toLowerCase()).length;
+            document.getElementById('profileCardMsgCount').innerText = userMsgCount;
+
+            const followsDB = JSON.parse(localStorage.getItem('user_follows_db') || '{}');
+            let followersCount = 0;
+            Object.keys(followsDB).forEach(followerEmail => {
+                if (followsDB[followerEmail] && followsDB[followerEmail].includes(email)) followersCount++;
+            });
+            document.getElementById('profileCardFollowersCount').innerText = followersCount;
+            document.getElementById('profileCardFollowingCount').innerText = (followsDB[email] || []).length;
+
+            const isSelf = currentUser && (currentUser.email === email || currentUser.name.toLowerCase() === name.toLowerCase());
+            const followBtn = document.getElementById('profileFollowBtn');
+
+            if (isSelf) {
+                document.getElementById('profileBadgeSelf').classList.remove('hidden');
+                document.getElementById('profileEditBtn').classList.remove('hidden');
+                followBtn.classList.add('hidden');
+            } else {
+                document.getElementById('profileBadgeSelf').classList.add('hidden');
+                document.getElementById('profileEditBtn').classList.add('hidden');
+                followBtn.classList.remove('hidden');
+
+                const myFollowing = followsDB[currentUser ? currentUser.email : ''] || [];
+                updateFollowBtnUI(myFollowing.includes(email));
+            }
+
+            document.getElementById('viewProfileModal').classList.remove('hidden');
+        }
+
+        function closeViewProfileModal() {
+            const basePath = window.location.pathname.replace(/\/user\/.*$/, '').replace(/\/$/, '');
+            history.pushState({}, "", basePath || "/");
+            document.getElementById('viewProfileModal').classList.add('hidden');
+        }
+
+        function closeViewProfileModalSilently() {
+            document.getElementById('viewProfileModal').classList.add('hidden');
+        }
+
+        function goHome() {
+            const basePath = window.location.pathname.replace(/\/user\/.*$/, '').replace(/\/$/, '');
+            history.pushState({}, "", basePath || "/");
+            closeViewProfileModalSilently();
+        }
+
+        function updateFollowBtnUI(isFollowing) {
+            const btn = document.getElementById('profileFollowBtn');
+            const btnText = document.getElementById('followBtnText');
+            if (isFollowing) {
+                btn.className = "px-8 py-3 bg-emerald-500 hover:bg-emerald-600 text-white rounded-2xl font-bold text-sm shadow-md flex items-center gap-2 transition";
+                btnText.innerText = "Đang theo dõi";
+                btn.querySelector('i').className = "fas fa-check";
+            } else {
+                btn.className = "px-8 py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-2xl font-bold text-sm shadow-md flex items-center gap-2 transition";
+                btnText.innerText = "Theo dõi";
+                btn.querySelector('i').className = "fas fa-user-plus";
+            }
+        }
+
+        function toggleFollowUser() {
+            if (!currentUser) return alert('Vui lòng đăng nhập để thực hiện theo dõi!');
+            if (!currentViewingEmail || currentViewingEmail === currentUser.email) return;
+
+            const followsDB = JSON.parse(localStorage.getItem('user_follows_db') || '{}');
+            let myFollowing = followsDB[currentUser.email] || [];
+            const index = myFollowing.indexOf(currentViewingEmail);
+            if (index > -1) myFollowing.splice(index, 1);
+            else myFollowing.push(currentViewingEmail);
+
+            followsDB[currentUser.email] = myFollowing;
+            localStorage.setItem('user_follows_db', JSON.stringify(followsDB));
+            viewUserProfile(currentViewingEmail, document.getElementById('profileCardName').innerText, document.getElementById('profileCardAvatar').src);
+        }
+
+        function openEditProfileModal() {
+            if (!currentUser) return;
+            document.getElementById('editNameInput').value = currentUser.name;
+            document.getElementById('editAvatarPreview').src = currentUser.picture || '';
+            tempAvatarData = currentUser.picture;
+            document.getElementById('editProfileModal').classList.remove('hidden');
+        }
+
+        function closeEditProfileModal() {
+            document.getElementById('editProfileModal').classList.add('hidden');
+        }
+
+        function handleAvatarFileSelect(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                tempAvatarData = e.target.result;
+                document.getElementById('editAvatarPreview').src = tempAvatarData;
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function selectPresetAvatar(srcUrl) {
+            tempAvatarData = srcUrl;
+            document.getElementById('editAvatarPreview').src = srcUrl;
+        }
+
+        function saveUserProfile() {
+            const newName = document.getElementById('editNameInput').value.trim();
+            if (!newName) return alert('Tên không được để trống!');
+
+            currentUser.name = newName;
+            currentUser.picture = tempAvatarData;
+
+            const userProfilesDB = JSON.parse(localStorage.getItem('user_profiles_db') || '{}');
+            userProfilesDB[currentUser.email] = { name: currentUser.name, picture: currentUser.picture, email: currentUser.email };
+            localStorage.setItem('user_profiles_db', JSON.stringify(userProfilesDB));
+            localStorage.setItem('real_google_chat_user', JSON.stringify(currentUser));
+
+            updateUserUI();
+            closeEditProfileModal();
+            renderMessages();
+        }
+
+        function openGifModal() {
+            if (!currentUser) return alert('Vui lòng đăng nhập Google để chọn GIF!');
+            document.getElementById('gifModal').classList.remove('hidden');
+            document.getElementById('gifSearchInput').value = '';
+            searchKlipyGifs('');
+        }
+
+        function closeGifModal() {
+            document.getElementById('gifModal').classList.add('hidden');
+        }
+
+        function searchKlipyGifs(query) {
+            clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(() => {
+                const grid = document.getElementById('gifGrid');
+                grid.innerHTML = `<p class="col-span-2 text-center text-xs text-slate-400 py-6">Đang tải GIF từ Klipy...</p>`;
+
+                const endpoint = query.trim() 
+                    ? `https://api.klipy.com/api/v1/${klipyAppKey}/gifs/search?page=1&per_page=12&q=${encodeURIComponent(query)}`
+                    : `https://api.klipy.com/api/v1/${klipyAppKey}/gifs/trending?page=1&per_page=12`;
+
+                fetch(endpoint)
+                    .then(res => res.json())
+                    .then(data => {
+                        grid.innerHTML = '';
+                        const items = data.data || data.results || [];
+                        if (items.length > 0) {
+                            items.forEach(item => {
+                                const gifUrl = item.files?.gif?.url || item.url || item.media?.[0]?.gif?.url;
+                                if (gifUrl) {
+                                    const img = document.createElement('img');
+                                    img.src = gifUrl;
+                                    img.className = "w-full h-28 object-cover rounded-xl cursor-pointer border hover:border-purple-500 transition hover:scale-[1.02]";
+                                    img.onclick = () => sendGifMessage(gifUrl);
+                                    grid.appendChild(img);
+                                }
+                            });
+                        } else {
+                            grid.innerHTML = `<p class="col-span-2 text-center text-xs text-slate-400 py-6">Không tìm thấy GIF phù hợp</p>`;
+                        }
+                    })
+                    .catch(() => {
+                        grid.innerHTML = `<p class="col-span-2 text-center text-xs text-red-400 py-6">Lỗi kết nối Klipy API</p>`;
+                    });
+            }, 400);
+        }
+
+        function sendGifMessage(gifUrl) {
+            if (!currentUser) return;
+            const newMsg = {
+                id: Date.now(),
+                author: currentUser.name,
+                email: currentUser.email,
+                avatar: currentUser.picture || '',
+                content: gifUrl,
+                time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+                type: 'gif',
+                replyTo: replyingTo ? { ...replyingTo } : null
+            };
+            const messagesRef = window.fbRef(window.fbDb, 'messages');
+            window.fbSet(window.fbPush(messagesRef), newMsg).then(() => {
+                cancelReply();
+            });
+            closeGifModal();
+        }
+
+        function handleKeySend(e) {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                sendChatMessage();
+            }
+        }
+
+        function sendChatMessage() {
+            if (!currentUser) return alert('Vui lòng đăng nhập Google để gửi tin nhắn!');
+            const input = document.getElementById('chatInputText');
+            const text = input.value.trim();
+            if(!text) return;
+
+            const newMsg = {
+                id: Date.now(),
+                author: currentUser.name,
+                email: currentUser.email,
+                avatar: currentUser.picture || '',
+                content: text,
+                time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+                type: 'text',
+                replyTo: replyingTo ? { ...replyingTo } : null
+            };
+
+            const messagesRef = window.fbRef(window.fbDb, 'messages');
+            window.fbSet(window.fbPush(messagesRef), newMsg).then(() => {
+                input.value = '';
+                cancelReply();
+            }).catch(() => {
+                alert('Không thể gửi tin nhắn. Hãy kiểm tra kết nối Firebase!');
+            });
+        }
+
+        function triggerImageUpload() {
+            if (!currentUser) return alert('Vui lòng đăng nhập Google để gửi ảnh!');
+            document.getElementById('chatImageInput').click();
+        }
+
+        function handleChatImage(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const newMsg = {
+                    id: Date.now(),
+                    author: currentUser.name,
+                    email: currentUser.email,
+                    avatar: currentUser.picture || '',
+                    content: e.target.result,
+                    time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+                    type: 'image',
+                    replyTo: replyingTo ? { ...replyingTo } : null
+                };
+                const messagesRef = window.fbRef(window.fbDb, 'messages');
+                window.fbSet(window.fbPush(messagesRef), newMsg).then(() => {
+                    cancelReply();
+                });
+                event.target.value = '';
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function renderMessages() {
+            const container = document.getElementById('chatMessagesContainer');
+            container.innerHTML = '';
+
+            if (messages.length === 0) {
+                container.innerHTML = `<div class="text-center text-xs text-slate-400 py-10">Chưa có tin nhắn nào. Hãy bắt đầu trò chuyện!</div>`;
+                return;
+            }
+
+            const userProfilesDB = JSON.parse(localStorage.getItem('user_profiles_db') || '{}');
+            const isAdmin = currentUser ? checkIsAdmin(currentUser.email, currentUser.name) : false;
+
+            messages.forEach(msg => {
+                const isMyMsg = currentUser && currentUser.email === msg.email;
+                const div = document.createElement('div');
+                div.id = "msg_box_" + msg.firebaseKey;
+                div.className = isMyMsg ? "flex items-start gap-3 flex-row-reverse justify-start group relative" : "flex items-start gap-3 justify-start group relative";
+
+                const profile = userProfilesDB[msg.email] || { name: msg.author, picture: msg.avatar };
+                const displayAuthor = profile.name;
+                const displayAvatar = profile.picture;
+
+                let replyHtml = '';
+                if (msg.replyTo) {
+                    replyHtml = `
+                        <div class="mb-1 bg-slate-100 border-l-2 border-indigo-500 px-2 py-1 rounded text-[10px] text-slate-500">
+                            <span class="font-bold text-indigo-600">${msg.replyTo.author}:</span> ${msg.replyTo.content}
+                        </div>
+                    `;
+                }
+
+                let bodyContent = '';
+                if(msg.type === 'text') {
+                    bodyContent = isMyMsg 
+                        ? `<div class="mt-1 bg-emerald-600 text-white border border-emerald-500 rounded-2xl rounded-tr-none px-4 py-2.5 text-xs shadow-sm inline-block text-left">${replyHtml}${msg.content}</div>`
+                        : `<div class="mt-1 bg-white border border-slate-200 rounded-2xl rounded-tl-none px-4 py-2.5 text-xs text-slate-700 shadow-sm inline-block text-left">${replyHtml}${msg.content}</div>`;
+                } else if(msg.type === 'image') {
+                    bodyContent = `<div class="mt-1">${replyHtml}<img src="${msg.content}" class="max-w-[280px] rounded-2xl border shadow-sm"></div>`;
+                } else if(msg.type === 'gif') {
+                    bodyContent = `<div class="mt-1">${replyHtml}<img src="${msg.content}" class="max-w-[220px] rounded-2xl border shadow-sm"></div>`;
+                }
+
+                const safeAuthor = displayAuthor.replace(/'/g, "\\'");
+                const avatarHtml = displayAvatar 
+                    ? `<img src="${displayAvatar}" onclick="viewUserProfile('${msg.email}', '${safeAuthor}', '${displayAvatar}')" class="w-8 h-8 rounded-full object-cover border cursor-pointer hover:opacity-80 transition shrink-0">` 
+                    : `<div onclick="viewUserProfile('${msg.email}', '${safeAuthor}', '')" class="w-8 h-8 bg-indigo-600 text-white rounded-full flex items-center justify-center font-bold text-xs cursor-pointer hover:opacity-80 transition shrink-0">${displayAuthor.charAt(0).toUpperCase()}</div>`;
+
+                const canDelete = isAdmin || isMyMsg;
+                const actionsHtml = `
+                    <div class="absolute ${isMyMsg ? 'right-full mr-2' : 'left-full ml-2'} top-2 hidden group-hover:flex items-center gap-1 bg-white border border-slate-200 shadow-sm rounded-lg px-2 py-1 text-[11px] z-10">
+                        <button onclick="replyToMessage('${msg.firebaseKey}', '${safeAuthor}', '${(msg.type === 'text' ? msg.content : '[Đính kèm media]').replace(/'/g, "\\'")}')" class="text-indigo-600 hover:text-indigo-800 px-1" title="Trả lời"><i class="fas fa-reply"></i></button>
+                        <button onclick="copyMessageLink('${msg.firebaseKey}')" class="text-slate-500 hover:text-slate-700 px-1" title="Sao chép đường dẫn"><i class="fas fa-link"></i></button>
+                        ${canDelete ? `<button onclick="deleteMessage('${msg.firebaseKey}')" class="text-red-500 hover:text-red-700 px-1" title="Xóa tin nhắn"><i class="fas fa-trash"></i></button>` : ''}
+                    </div>
+                `;
+
+                div.innerHTML = `
+                    ${avatarHtml}
+                    <div class="${isMyMsg ? 'text-right' : 'text-left'} relative">
+                        <div class="flex items-center gap-2 ${isMyMsg ? 'justify-end' : 'justify-start'}">
+                            <span onclick="viewUserProfile('${msg.email}', '${safeAuthor}', '${displayAvatar || ''}')" class="font-bold text-xs text-slate-800 hover:underline cursor-pointer">${displayAuthor}</span>
+                            <span class="text-[10px] text-slate-400">${msg.time}</span>
+                        </div>
+                        ${bodyContent}
+                        ${actionsHtml}
+                    </div>
+                `;
+                container.appendChild(div);
+            });
+
+            container.scrollTop = container.scrollHeight;
+        }
+    </script>
+</body>
+</html>
