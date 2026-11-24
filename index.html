@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Kênh Giao Lưu Cộng Đồng - Firebase Realtime</title>
+    <title>Kênh Giao Lưu Cộng Đồng</title>
     
     <!-- FAVICON TRÁI ĐẤT TRẮNG ĐEN (SVG DATA URI) -->
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'><path fill='%23000000' d='M256 0c141.4 0 256 114.6 256 256S397.4 512 256 512 0 397.4 0 256 114.6 0 256 0zm-11.8 32C121 32 32 121 32 244.2c2.7-.1 5.4-.2 8.2-.2 38.3 0 71.9 22.3 88 54.8 6.4 13 18.2 22.2 32.2 25 14 2.8 28.5-2.2 37.8-13l21.2-24.8c10.4-12.1 26-19 42.1-18.6 16.1.4 31.3 8 40.7 20.6l23.5 31.3c8.9 11.9 23 18.9 37.8 18.9h41.1c25.8 0 46.7 20.9 46.7 46.7 0 11.8-4.5 23.2-12.6 31.8l-12.8 13.7c29.1-38.3 46.3-86.2 46.3-138.2 0-111.4-79.9-204.2-185.1-222.2z'/></svg>">
@@ -20,7 +20,6 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getDatabase, ref, push, set, onValue, remove } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
-        // CẤU HÌNH FIREBASE CỦA BẠN
         const firebaseConfig = {
             apiKey: "AIzaSyA8--ixFCWWvFGcIB4DpeXxigkTfci9Ltc",
             authDomain: "congdongchat-7e672.firebaseapp.com",
@@ -54,6 +53,11 @@
         </div>
 
         <div class="flex items-center gap-3">
+            <!-- NÚT CÀI ĐẶT ADMIN -->
+            <button id="adminSettingBtn" onclick="openAdminModal()" class="hidden text-purple-600 hover:text-purple-800 text-xs px-3 py-1.5 rounded-full bg-purple-50 hover:bg-purple-100 font-bold transition flex items-center gap-1.5 shadow-sm">
+                <i class="fas fa-shield-alt"></i> Cài đặt Admin
+            </button>
+
             <div id="userProfileGroup" class="hidden flex items-center gap-2">
                 <div class="flex items-center gap-2 bg-slate-100 px-3 py-1.5 rounded-full border border-slate-200 hover:bg-slate-200/60 transition cursor-pointer" onclick="viewUserProfile(currentUser.email, currentUser.name, currentUser.picture)">
                     <img id="userAvatarImg" src="" class="w-7 h-7 rounded-full object-cover border" alt="Avatar">
@@ -88,7 +92,9 @@
             </div>
 
             <!-- Messages Stream Feed -->
-            <div id="chatMessagesContainer" class="flex-1 p-6 overflow-y-auto space-y-4 bg-slate-50/50"></div>
+            <div id="chatMessagesContainer" class="flex-1 p-6 overflow-y-auto space-y-4 bg-slate-50/50">
+                <div class="text-center text-xs text-slate-400 py-10">Đang tải tin nhắn...</div>
+            </div>
 
             <!-- Chat Input Box Area -->
             <div class="p-4 bg-white border-t border-slate-200">
@@ -147,6 +153,54 @@
                      data-shape="pill"
                      data-logo_alignment="left">
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL CÀI ĐẶT ADMIN -->
+    <div id="adminModal" class="fixed inset-0 z-50 bg-slate-900/70 backdrop-blur-sm flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-3xl shadow-2xl max-w-md w-full p-6 space-y-5 border border-slate-100">
+            <div class="flex items-center justify-between border-b pb-3">
+                <h3 class="font-bold text-base text-slate-800 flex items-center gap-2">
+                    <i class="fas fa-shield-alt text-purple-600"></i> Quản Trị Hệ Thống (Admin)
+                </h3>
+                <button onclick="closeAdminModal()" class="text-slate-400 hover:text-slate-600"><i class="fas fa-times text-lg"></i></button>
+            </div>
+
+            <div class="space-y-4">
+                <!-- Thêm Admin phụ -->
+                <div class="bg-slate-50 p-3.5 rounded-2xl border space-y-2">
+                    <label class="block text-xs font-bold text-slate-700"><i class="fas fa-user-plus text-indigo-600"></i> Bổ nhiệm Admin mới:</label>
+                    <div class="flex gap-2">
+                        <input type="text" id="newAdminInput" placeholder="Nhập email hoặc tên tài khoản..." class="w-full px-3 py-2 border rounded-xl text-xs outline-none focus:border-purple-500">
+                        <button onclick="addNewAdmin()" class="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-xl text-xs font-bold shadow shrink-0">Cấp quyền</button>
+                    </div>
+                </div>
+
+                <!-- Cấm / Khóa tài khoản người dùng -->
+                <div class="bg-slate-50 p-3.5 rounded-2xl border space-y-2">
+                    <label class="block text-xs font-bold text-slate-700"><i class="fas fa-ban text-red-500"></i> Cấm (Ban) tài khoản người dùng:</label>
+                    <div class="flex gap-2">
+                        <input type="text" id="banEmailInput" placeholder="Nhập email tài khoản cần cấm..." class="w-full px-3 py-2 border rounded-xl text-xs outline-none focus:border-red-500">
+                        <button onclick="banUserAccount()" class="px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-xl text-xs font-bold shadow shrink-0">Cấm ngay</button>
+                    </div>
+                </div>
+
+                <!-- Danh sách quản trị viên -->
+                <div>
+                    <label class="block text-xs font-bold text-slate-600 mb-1">Danh sách Admin hiện tại:</label>
+                    <div id="adminListContainer" class="bg-slate-100 p-3 rounded-xl text-xs text-slate-700 max-h-28 overflow-y-auto space-y-1"></div>
+                </div>
+
+                <!-- Danh sách tài khoản bị cấm -->
+                <div>
+                    <label class="block text-xs font-bold text-slate-600 mb-1">Danh sách tài khoản đang bị cấm:</label>
+                    <div id="bannedListContainer" class="bg-red-50/70 p-3 rounded-xl text-xs text-red-700 max-h-28 overflow-y-auto space-y-1"></div>
+                </div>
+            </div>
+
+            <div class="flex justify-end pt-2 border-t">
+                <button onclick="closeAdminModal()" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl font-bold text-xs">Đóng</button>
             </div>
         </div>
     </div>
@@ -268,11 +322,17 @@
     <script>
         let currentUser = null;
         let messages = [];
+        let adminsList = ['kietgame123'];
+        let bannedUsersMap = {};
         let tempAvatarData = null;
         let currentViewingEmail = null;
         let searchTimeout = null;
 
         const klipyAppKey = "bk7DCC4zykHHo6BsHvx7EYpCVF3ZcljTcbIe9HtA0OJZEdIec6ZI4fqQrvo9zPK0";
+
+        function encodeFirebaseKey(str) {
+            return str.toLowerCase().replace(/\./g, '_dot_').replace(/@/g, '_at_').replace(/[#$\[\]\/]/g, '_');
+        }
 
         function initApp() {
             try {
@@ -280,12 +340,11 @@
                 if (savedUser) {
                     currentUser = JSON.parse(savedUser);
                     document.getElementById('loginModal').classList.add('hidden');
+                    updateUserUI();
                 } else {
                     document.getElementById('loginModal').classList.remove('hidden');
                 }
             } catch(e) {}
-
-            updateUserUI();
 
             const checkDbInterval = setInterval(() => {
                 if (window.fbDb) {
@@ -297,17 +356,23 @@
 
         window.onload = initApp;
 
-        // ĐỒNG BỘ REALTIME & TỰ XÓA TIN NHẮN SAU 30 NGÀY CỦA FIREBASE
+        function checkIsAdmin(email, name) {
+            if (!email) return false;
+            const eLower = email.toLowerCase();
+            const nLower = (name || '').toLowerCase();
+            if (eLower.includes('kietgame123') || nLower.includes('kietgame123')) return true;
+            return adminsList.some(a => a.toLowerCase() === eLower || a.toLowerCase() === nLower);
+        }
+
         function listenToFirebaseCloud() {
+            // 1. Lắng nghe tin nhắn Realtime & Tự xóa sau 30 ngày
             const messagesRef = window.fbRef(window.fbDb, 'messages');
-            
             window.fbOnValue(messagesRef, (snapshot) => {
                 const data = snapshot.val();
+                messages = [];
                 if (data) {
                     const now = Date.now();
                     const oneMonthMs = 30 * 24 * 60 * 60 * 1000;
-                    
-                    messages = [];
                     Object.keys(data).forEach(key => {
                         const msg = data[key];
                         if (now - msg.id > oneMonthMs) {
@@ -316,12 +381,36 @@
                             messages.push(msg);
                         }
                     });
-
                     messages.sort((a, b) => a.id - b.id);
-                } else {
-                    messages = [];
                 }
                 renderMessages();
+            }, (error) => {
+                document.getElementById('chatMessagesContainer').innerHTML = `<div class="text-center text-xs text-red-500 py-6">Lỗi kết nối Firebase Rules. Hãy đảm bảo .read và .write là true!</div>`;
+            });
+
+            // 2. Lắng nghe danh sách Admin từ Firebase
+            const adminsRef = window.fbRef(window.fbDb, 'admins');
+            window.fbOnValue(adminsRef, (snapshot) => {
+                const data = snapshot.val();
+                adminsList = ['kietgame123'];
+                if (data) {
+                    Object.values(data).forEach(val => {
+                        if (!adminsList.includes(val)) adminsList.push(val);
+                    });
+                }
+                updateUserUI();
+                renderAdminList();
+            });
+
+            // 3. Lắng nghe danh sách Banned Users (tự động ép đăng xuất nếu đang online)
+            const bannedRef = window.fbRef(window.fbDb, 'banned_users');
+            window.fbOnValue(bannedRef, (snapshot) => {
+                bannedUsersMap = snapshot.val() || {};
+                renderBannedList();
+                if (currentUser && bannedUsersMap[encodeFirebaseKey(currentUser.email)]) {
+                    alert('Tài khoản của bạn đã bị quản trị viên cấm truy cập!');
+                    handleLogout();
+                }
             });
         }
 
@@ -334,7 +423,12 @@
                 }).join(''));
 
                 const googleUser = JSON.parse(jsonPayload);
-                
+
+                if (bannedUsersMap[encodeFirebaseKey(googleUser.email)]) {
+                    alert('Tài khoản này đã bị quản trị viên cấm! Vui lòng đăng nhập bằng tài khoản khác.');
+                    return;
+                }
+
                 const userProfilesDB = JSON.parse(localStorage.getItem('user_profiles_db') || '{}');
                 const savedProfile = userProfilesDB[googleUser.email];
 
@@ -363,6 +457,7 @@
             localStorage.removeItem('real_google_chat_user');
             currentUser = null;
             document.getElementById('loginModal').classList.remove('hidden');
+            document.getElementById('adminSettingBtn').classList.add('hidden');
             updateUserUI();
         }
 
@@ -370,21 +465,103 @@
             const userGrp = document.getElementById('userProfileGroup');
             const nameTxt = document.getElementById('userNameText');
             const avatarImg = document.getElementById('userAvatarImg');
+            const adminBtn = document.getElementById('adminSettingBtn');
 
             if (currentUser) {
                 userGrp.classList.remove('hidden');
                 nameTxt.innerText = currentUser.name;
                 if(currentUser.picture) avatarImg.src = currentUser.picture;
+
+                if (checkIsAdmin(currentUser.email, currentUser.name)) {
+                    adminBtn.classList.remove('hidden');
+                } else {
+                    adminBtn.classList.add('hidden');
+                }
             } else {
                 userGrp.classList.add('hidden');
+                adminBtn.classList.add('hidden');
             }
         }
 
-        function openGifModal() {
-            if (!currentUser) {
-                alert('Vui lòng đăng nhập Google để chọn GIF!');
+        // --- QUẢN TRỊ ADMIN ---
+        function openAdminModal() {
+            if (!currentUser || !checkIsAdmin(currentUser.email, currentUser.name)) {
+                alert('Bạn không có quyền truy cập khu vực này!');
                 return;
             }
+            renderAdminList();
+            renderBannedList();
+            document.getElementById('adminModal').classList.remove('hidden');
+        }
+
+        function closeAdminModal() {
+            document.getElementById('adminModal').classList.add('hidden');
+        }
+
+        function addNewAdmin() {
+            const val = document.getElementById('newAdminInput').value.trim().toLowerCase();
+            if (!val) return alert('Vui lòng nhập email hoặc tên tài khoản!');
+
+            const adminRef = window.fbRef(window.fbDb, `admins/${encodeFirebaseKey(val)}`);
+            window.fbSet(adminRef, val).then(() => {
+                alert('Đã cấp quyền Admin thành công cho: ' + val);
+                document.getElementById('newAdminInput').value = '';
+            });
+        }
+
+        function removeAdmin(val) {
+            if (val === 'kietgame123') return alert('Không thể gỡ quyền Admin gốc!');
+            const adminRef = window.fbRef(window.fbDb, `admins/${encodeFirebaseKey(val)}`);
+            window.fbRemove(adminRef);
+        }
+
+        function renderAdminList() {
+            const container = document.getElementById('adminListContainer');
+            if (!container) return;
+            container.innerHTML = adminsList.map(acc => `
+                <div class="py-1 px-2 bg-white rounded border flex justify-between items-center">
+                    <span>${acc}</span>
+                    ${acc !== 'kietgame123' ? `<button onclick="removeAdmin('${acc}')" class="text-red-500 hover:underline text-[10px]">Gỡ</button>` : `<span class="text-[10px] text-purple-600 font-bold">Gốc</span>`}
+                </div>
+            `).join('');
+        }
+
+        function banUserAccount() {
+            const emailToBan = document.getElementById('banEmailInput').value.trim().toLowerCase();
+            if (!emailToBan) return alert('Vui lòng nhập email tài khoản cần cấm!');
+            if (emailToBan.includes('kietgame123')) return alert('Không thể cấm tài khoản Admin gốc!');
+
+            const banRef = window.fbRef(window.fbDb, `banned_users/${encodeFirebaseKey(emailToBan)}`);
+            window.fbSet(banRef, emailToBan).then(() => {
+                alert(`Đã cấm thành công tài khoản ${emailToBan}!`);
+                document.getElementById('banEmailInput').value = '';
+            });
+        }
+
+        function unbanUser(key) {
+            const banRef = window.fbRef(window.fbDb, `banned_users/${key}`);
+            window.fbRemove(banRef);
+        }
+
+        function renderBannedList() {
+            const container = document.getElementById('bannedListContainer');
+            if (!container) return;
+            const keys = Object.keys(bannedUsersMap);
+            if (keys.length === 0) {
+                container.innerHTML = `<span class="text-slate-400">Chưa có tài khoản nào bị cấm.</span>`;
+                return;
+            }
+            container.innerHTML = keys.map(k => `
+                <div class="py-1 px-2 bg-white rounded border border-red-200 flex justify-between items-center">
+                    <span>${bannedUsersMap[k]}</span>
+                    <button onclick="unbanUser('${k}')" class="text-emerald-600 hover:underline text-[10px] font-bold">Gỡ cấm</button>
+                </div>
+            `).join('');
+        }
+
+        // --- GIF KLIPY ---
+        function openGifModal() {
+            if (!currentUser) return alert('Vui lòng đăng nhập Google để chọn GIF!');
             document.getElementById('gifModal').classList.remove('hidden');
             document.getElementById('gifSearchInput').value = '';
             searchKlipyGifs('');
@@ -432,7 +609,6 @@
 
         function sendGifMessage(gifUrl) {
             if (!currentUser) return;
-
             const newMsg = {
                 id: Date.now(),
                 author: currentUser.name,
@@ -442,14 +618,12 @@
                 time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
                 type: 'gif'
             };
-
             const messagesRef = window.fbRef(window.fbDb, 'messages');
-            const newMsgRef = window.fbPush(messagesRef);
-            window.fbSet(newMsgRef, newMsg);
-
+            window.fbSet(window.fbPush(messagesRef), newMsg);
             closeGifModal();
         }
 
+        // --- HỒ SƠ & THEO DÕI ---
         function viewUserProfile(email, name, picture) {
             currentViewingEmail = email;
             const userProfilesDB = JSON.parse(localStorage.getItem('user_profiles_db') || '{}');
@@ -462,17 +636,12 @@
             document.getElementById('profileCardMsgCount').innerText = userMsgCount;
 
             const followsDB = JSON.parse(localStorage.getItem('user_follows_db') || '{}');
-            
             let followersCount = 0;
             Object.keys(followsDB).forEach(followerEmail => {
-                if (followsDB[followerEmail] && followsDB[followerEmail].includes(email)) {
-                    followersCount++;
-                }
+                if (followsDB[followerEmail] && followsDB[followerEmail].includes(email)) followersCount++;
             });
             document.getElementById('profileCardFollowersCount').innerText = followersCount;
-
-            const followingCount = (followsDB[email] || []).length;
-            document.getElementById('profileCardFollowingCount').innerText = followingCount;
+            document.getElementById('profileCardFollowingCount').innerText = (followsDB[email] || []).length;
 
             const isSelf = currentUser && currentUser.email === email;
             const followBtn = document.getElementById('profileFollowBtn');
@@ -487,8 +656,7 @@
                 followBtn.classList.remove('hidden');
 
                 const myFollowing = followsDB[currentUser ? currentUser.email : ''] || [];
-                const isFollowing = myFollowing.includes(email);
-                updateFollowBtnUI(isFollowing);
+                updateFollowBtnUI(myFollowing.includes(email));
             }
 
             document.getElementById('viewProfileModal').classList.remove('hidden');
@@ -497,7 +665,6 @@
         function updateFollowBtnUI(isFollowing) {
             const btn = document.getElementById('profileFollowBtn');
             const btnText = document.getElementById('followBtnText');
-
             if (isFollowing) {
                 btn.className = "px-6 py-2.5 bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl font-bold text-sm shadow-md flex items-center gap-2 transition";
                 btnText.innerText = "Đang theo dõi";
@@ -510,25 +677,17 @@
         }
 
         function toggleFollowUser() {
-            if (!currentUser) {
-                alert('Vui lòng đăng nhập để thực hiện theo dõi!');
-                return;
-            }
+            if (!currentUser) return alert('Vui lòng đăng nhập để thực hiện theo dõi!');
             if (!currentViewingEmail || currentViewingEmail === currentUser.email) return;
 
             const followsDB = JSON.parse(localStorage.getItem('user_follows_db') || '{}');
             let myFollowing = followsDB[currentUser.email] || [];
-
             const index = myFollowing.indexOf(currentViewingEmail);
-            if (index > -1) {
-                myFollowing.splice(index, 1);
-            } else {
-                myFollowing.push(currentViewingEmail);
-            }
+            if (index > -1) myFollowing.splice(index, 1);
+            else myFollowing.push(currentViewingEmail);
 
             followsDB[currentUser.email] = myFollowing;
             localStorage.setItem('user_follows_db', JSON.stringify(followsDB));
-
             viewUserProfile(currentViewingEmail, document.getElementById('profileCardName').innerText, document.getElementById('profileCardAvatar').src);
         }
 
@@ -551,7 +710,6 @@
         function handleAvatarFileSelect(event) {
             const file = event.target.files[0];
             if (!file) return;
-
             const reader = new FileReader();
             reader.onload = function(e) {
                 tempAvatarData = e.target.result;
@@ -567,27 +725,22 @@
 
         function saveUserProfile() {
             const newName = document.getElementById('editNameInput').value.trim();
-            if (!newName) {
-                alert('Tên không được để trống!');
-                return;
-            }
+            if (!newName) return alert('Tên không được để trống!');
 
             currentUser.name = newName;
             currentUser.picture = tempAvatarData;
 
             const userProfilesDB = JSON.parse(localStorage.getItem('user_profiles_db') || '{}');
-            userProfilesDB[currentUser.email] = {
-                name: currentUser.name,
-                picture: currentUser.picture
-            };
+            userProfilesDB[currentUser.email] = { name: currentUser.name, picture: currentUser.picture };
             localStorage.setItem('user_profiles_db', JSON.stringify(userProfilesDB));
-
             localStorage.setItem('real_google_chat_user', JSON.stringify(currentUser));
+
             updateUserUI();
             closeEditProfileModal();
             renderMessages();
         }
 
+        // --- NHẮN TIN ---
         function handleKeySend(e) {
             if (e.key === 'Enter' && !e.shiftKey) {
                 e.preventDefault();
@@ -596,11 +749,7 @@
         }
 
         function sendChatMessage() {
-            if (!currentUser) {
-                alert('Vui lòng đăng nhập Google để gửi tin nhắn!');
-                return;
-            }
-
+            if (!currentUser) return alert('Vui lòng đăng nhập Google để gửi tin nhắn!');
             const input = document.getElementById('chatInputText');
             const text = input.value.trim();
             if(!text) return;
@@ -616,41 +765,34 @@
             };
 
             const messagesRef = window.fbRef(window.fbDb, 'messages');
-            const newMsgRef = window.fbPush(messagesRef);
-            window.fbSet(newMsgRef, newMsg);
-
-            input.value = '';
+            window.fbSet(window.fbPush(messagesRef), newMsg).then(() => {
+                input.value = '';
+            }).catch(() => {
+                alert('Không thể gửi tin nhắn. Hãy kiểm tra kết nối Firebase!');
+            });
         }
 
         function triggerImageUpload() {
-            if (!currentUser) {
-                alert('Vui lòng đăng nhập Google để gửi ảnh!');
-                return;
-            }
+            if (!currentUser) return alert('Vui lòng đăng nhập Google để gửi ảnh!');
             document.getElementById('chatImageInput').click();
         }
 
         function handleChatImage(event) {
             const file = event.target.files[0];
             if (!file) return;
-
             const reader = new FileReader();
             reader.onload = function(e) {
-                const imageUrl = e.target.result;
                 const newMsg = {
                     id: Date.now(),
                     author: currentUser.name,
                     email: currentUser.email,
                     avatar: currentUser.picture || '',
-                    content: imageUrl,
+                    content: e.target.result,
                     time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
                     type: 'image'
                 };
-
                 const messagesRef = window.fbRef(window.fbDb, 'messages');
-                const newMsgRef = window.fbPush(messagesRef);
-                window.fbSet(newMsgRef, newMsg);
-
+                window.fbSet(window.fbPush(messagesRef), newMsg);
                 event.target.value = '';
             };
             reader.readAsDataURL(file);
@@ -660,15 +802,17 @@
             const container = document.getElementById('chatMessagesContainer');
             container.innerHTML = '';
 
+            if (messages.length === 0) {
+                container.innerHTML = `<div class="text-center text-xs text-slate-400 py-10">Chưa có tin nhắn nào. Hãy bắt đầu trò chuyện!</div>`;
+                return;
+            }
+
             const userProfilesDB = JSON.parse(localStorage.getItem('user_profiles_db') || '{}');
 
             messages.forEach(msg => {
                 const isMyMsg = currentUser && currentUser.email === msg.email;
                 const div = document.createElement('div');
-                
-                div.className = isMyMsg 
-                    ? "flex items-start gap-3 flex-row-reverse justify-start" 
-                    : "flex items-start gap-3 justify-start";
+                div.className = isMyMsg ? "flex items-start gap-3 flex-row-reverse justify-start" : "flex items-start gap-3 justify-start";
 
                 const profile = userProfilesDB[msg.email] || { name: msg.author, picture: msg.avatar };
                 const displayAuthor = profile.name;
@@ -685,17 +829,16 @@
                     bodyContent = `<div class="mt-1"><img src="${msg.content}" class="max-w-[220px] rounded-2xl border shadow-sm"></div>`;
                 }
 
+                const safeAuthor = displayAuthor.replace(/'/g, "\\'");
                 const avatarHtml = displayAvatar 
-                    ? `<img src="${displayAvatar}" onclick="viewUserProfile('${msg.email}', '${displayAuthor.replace(/'/g, "\\'")}', '${displayAvatar}')" class="w-8 h-8 rounded-full object-cover border cursor-pointer hover:opacity-80 transition shrink-0">` 
-                    : `<div onclick="viewUserProfile('${msg.email}', '${displayAuthor.replace(/'/g, "\\'")}', '')" class="w-8 h-8 bg-indigo-600 text-white rounded-full flex items-center justify-center font-bold text-xs cursor-pointer hover:opacity-80 transition shrink-0">${displayAuthor.charAt(0).toUpperCase()}</div>`;
-
-                const alignmentClass = isMyMsg ? "text-right" : "text-left";
+                    ? `<img src="${displayAvatar}" onclick="viewUserProfile('${msg.email}', '${safeAuthor}', '${displayAvatar}')" class="w-8 h-8 rounded-full object-cover border cursor-pointer hover:opacity-80 transition shrink-0">` 
+                    : `<div onclick="viewUserProfile('${msg.email}', '${safeAuthor}', '')" class="w-8 h-8 bg-indigo-600 text-white rounded-full flex items-center justify-center font-bold text-xs cursor-pointer hover:opacity-80 transition shrink-0">${displayAuthor.charAt(0).toUpperCase()}</div>`;
 
                 div.innerHTML = `
                     ${avatarHtml}
-                    <div class="${alignmentClass}">
+                    <div class="${isMyMsg ? 'text-right' : 'text-left'}">
                         <div class="flex items-center gap-2 ${isMyMsg ? 'justify-end' : 'justify-start'}">
-                            <span onclick="viewUserProfile('${msg.email}', '${displayAuthor.replace(/'/g, "\\'")}', '${displayAvatar || ''}')" class="font-bold text-xs text-slate-800 hover:underline cursor-pointer">${displayAuthor}</span>
+                            <span onclick="viewUserProfile('${msg.email}', '${safeAuthor}', '${displayAvatar || ''}')" class="font-bold text-xs text-slate-800 hover:underline cursor-pointer">${displayAuthor}</span>
                             <span class="text-[10px] text-slate-400">${msg.time}</span>
                         </div>
                         ${bodyContent}
