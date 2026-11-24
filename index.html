@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Kênh Giao Lưu Cộng Đồng - Profile URL Routing</title>
+    <title>Kênh Giao Lưu Cộng Đồng - Full Screen Profile</title>
     
     <!-- FAVICON TRÁI ĐẤT TRẮNG ĐEN (SVG DATA URI) -->
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'><path fill='%23000000' d='M256 0c141.4 0 256 114.6 256 256S397.4 512 256 512 0 397.4 0 256 114.6 0 256 0zm-11.8 32C121 32 32 121 32 244.2c2.7-.1 5.4-.2 8.2-.2 38.3 0 71.9 22.3 88 54.8 6.4 13 18.2 22.2 32.2 25 14 2.8 28.5-2.2 37.8-13l21.2-24.8c10.4-12.1 26-19 42.1-18.6 16.1.4 31.3 8 40.7 20.6l23.5 31.3c8.9 11.9 23 18.9 37.8 18.9h41.1c25.8 0 46.7 20.9 46.7 46.7 0 11.8-4.5 23.2-12.6 31.8l-12.8 13.7c29.1-38.3 46.3-86.2 46.3-138.2 0-111.4-79.9-204.2-185.1-222.2z'/></svg>">
@@ -53,7 +53,6 @@
         </div>
 
         <div class="flex items-center gap-3">
-            <!-- NÚT CÀI ĐẶT ADMIN -->
             <button id="adminSettingBtn" onclick="openAdminModal()" class="hidden text-purple-600 hover:text-purple-800 text-xs px-3 py-1.5 rounded-full bg-purple-50 hover:bg-purple-100 font-bold transition flex items-center gap-1.5 shadow-sm">
                 <i class="fas fa-shield-alt"></i> Cài đặt Admin
             </button>
@@ -85,18 +84,16 @@
                     <div>
                         <h2 class="font-bold text-xs text-slate-800">Phòng Trò Chuyện Trực Tuyến</h2>
                         <div class="text-[10px] text-emerald-600 font-semibold flex items-center gap-1">
-                            <span class="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></span> Cloud Realtime & Dynamic User URL
+                            <span class="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></span> Cloud Realtime & Full Screen Profile
                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- Messages Stream Feed -->
             <div id="chatMessagesContainer" class="flex-1 p-6 overflow-y-auto space-y-4 bg-slate-50/50">
                 <div class="text-center text-xs text-slate-400 py-10">Đang tải tin nhắn...</div>
             </div>
 
-            <!-- KHUNG HIỂN THỊ ĐANG TRẢ LỜI (REPLY PREVIEW) -->
             <div id="replyPreviewContainer" class="hidden px-4 pt-2 bg-white border-t border-slate-100 flex items-center justify-between text-xs">
                 <div class="flex items-center gap-2 text-slate-600 border-l-4 border-indigo-500 pl-2 py-0.5 truncate">
                     <span class="font-bold text-indigo-600">Đang trả lời <span id="replyingToName"></span>:</span>
@@ -105,7 +102,6 @@
                 <button onclick="cancelReply()" class="text-slate-400 hover:text-slate-600 px-2 py-1"><i class="fas fa-times"></i></button>
             </div>
 
-            <!-- Chat Input Box Area -->
             <div class="p-4 bg-white border-t border-slate-200">
                 <div class="bg-slate-50 border border-slate-200 rounded-2xl p-3 space-y-2 focus-within:border-indigo-500 transition">
                     <textarea id="chatInputText" onkeydown="handleKeySend(event)" placeholder="Nhập tin nhắn giao lưu... (Nhấn Enter để gửi)" rows="2" class="w-full bg-transparent text-xs text-slate-800 placeholder-slate-400 outline-none resize-none"></textarea>
@@ -142,26 +138,17 @@
             <div class="w-14 h-14 bg-indigo-50 text-indigo-600 rounded-2xl mx-auto flex items-center justify-center text-2xl shadow mb-2">
                 <i class="fab fa-google"></i>
             </div>
-
             <div class="space-y-1">
                 <h3 class="font-bold text-xl text-slate-800">Xác thực tài khoản Google</h3>
                 <p class="text-xs text-slate-500">Đăng nhập bằng tài khoản Gmail thật của bạn để tham gia phòng chat</p>
             </div>
-
             <div class="flex justify-center py-3">
                 <div id="g_id_onload"
                      data-client_id="474895252858-e9nkstvak3uj4p2r10jbr32st8m4rgqn.apps.googleusercontent.com"
                      data-callback="handleGoogleCredentialResponse"
                      data-auto_prompt="false">
                 </div>
-                <div class="g_id_signin"
-                     data-type="standard"
-                     data-size="large"
-                     data-theme="outline"
-                     data-text="sign_in_with"
-                     data-shape="pill"
-                     data-logo_alignment="left">
-                </div>
+                <div class="g_id_signin" data-type="standard" data-size="large" data-theme="outline" data-text="sign_in_with" data-shape="pill" data-logo_alignment="left"></div>
             </div>
         </div>
     </div>
@@ -175,7 +162,6 @@
                 </h3>
                 <button onclick="closeAdminModal()" class="text-slate-400 hover:text-slate-600"><i class="fas fa-times text-lg"></i></button>
             </div>
-
             <div class="space-y-4">
                 <div class="bg-slate-50 p-3.5 rounded-2xl border space-y-2">
                     <label class="block text-xs font-bold text-slate-700"><i class="fas fa-users text-blue-600"></i> Danh sách tài khoản đã tham gia:</label>
@@ -183,7 +169,6 @@
                         <span class="text-slate-400 text-[11px]">Đang tải danh sách tài khoản...</span>
                     </div>
                 </div>
-
                 <div class="bg-slate-50 p-3.5 rounded-2xl border space-y-2">
                     <label class="block text-xs font-bold text-slate-700"><i class="fas fa-user-plus text-indigo-600"></i> Bổ nhiệm Admin mới:</label>
                     <div class="flex gap-2">
@@ -191,7 +176,6 @@
                         <button onclick="addNewAdmin()" class="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-xl text-xs font-bold shadow shrink-0">Cấp quyền</button>
                     </div>
                 </div>
-
                 <div class="bg-slate-50 p-3.5 rounded-2xl border space-y-2">
                     <label class="block text-xs font-bold text-slate-700"><i class="fas fa-ban text-red-500"></i> Cấm (Ban) tài khoản người dùng:</label>
                     <div class="flex gap-2">
@@ -199,18 +183,15 @@
                         <button onclick="banUserAccount()" class="px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-xl text-xs font-bold shadow shrink-0">Cấm ngay</button>
                     </div>
                 </div>
-
                 <div>
                     <label class="block text-xs font-bold text-slate-600 mb-1">Danh sách Admin hiện tại:</label>
                     <div id="adminListContainer" class="bg-slate-100 p-3 rounded-xl text-xs text-slate-700 max-h-24 overflow-y-auto space-y-1"></div>
                 </div>
-
                 <div>
                     <label class="block text-xs font-bold text-slate-600 mb-1">Danh sách tài khoản đang bị cấm:</label>
                     <div id="bannedListContainer" class="bg-red-50/70 p-3 rounded-xl text-xs text-red-700 max-h-24 overflow-y-auto space-y-1"></div>
                 </div>
             </div>
-
             <div class="flex justify-end pt-2 border-t">
                 <button onclick="closeAdminModal()" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl font-bold text-xs">Đóng</button>
             </div>
@@ -226,59 +207,63 @@
                 </h3>
                 <button onclick="closeGifModal()" class="text-slate-400 hover:text-slate-600"><i class="fas fa-times text-lg"></i></button>
             </div>
-
             <div class="flex items-center gap-2 bg-slate-100 px-3 py-2 rounded-xl border border-slate-200">
                 <i class="fas fa-search text-slate-400 text-xs"></i>
                 <input type="text" id="gifSearchInput" onkeyup="searchKlipyGifs(this.value)" placeholder="Nhập từ khóa tìm kiếm GIF..." class="w-full bg-transparent text-xs outline-none">
             </div>
-
             <div id="gifGrid" class="grid grid-cols-2 gap-3 max-h-80 overflow-y-auto p-1">
                 <p class="col-span-2 text-center text-xs text-slate-400 py-6">Đang tải GIF từ Klipy...</p>
             </div>
         </div>
     </div>
 
-    <!-- MODAL TRANG CÁ NHÂN TOÀN MÀN HÌNH -->
-    <div id="viewProfileModal" class="fixed inset-0 z-50 bg-slate-900/80 backdrop-blur-md flex items-center justify-center p-4 hidden">
-        <div class="bg-white rounded-3xl shadow-2xl max-w-lg w-full p-8 space-y-6 border border-slate-100 text-center relative overflow-hidden">
-            <button onclick="closeViewProfileModal()" class="absolute top-5 right-5 text-slate-400 hover:text-slate-600 bg-slate-100 hover:bg-slate-200 w-9 h-9 rounded-full flex items-center justify-center transition"><i class="fas fa-times text-base"></i></button>
+    <!-- TRANG CÁ NHÂN BAO QUÁT TOÀN BỘ MÀN HÌNH (FULL SCREEN PROFILE) -->
+    <div id="viewProfileModal" class="fixed inset-0 z-50 bg-white flex flex-col hidden overflow-y-auto">
+        <!-- Header điều hướng trang cá nhân -->
+        <div class="h-16 border-b border-slate-200 px-6 flex items-center justify-between bg-white sticky top-0 z-20 shadow-sm">
+            <button onclick="closeViewProfileModal()" class="flex items-center gap-2 text-slate-600 hover:text-slate-900 font-bold text-sm bg-slate-100 hover:bg-slate-200 px-4 py-2 rounded-xl transition">
+                <i class="fas fa-arrow-left"></i> Quay lại phòng chat
+            </button>
+            <span class="font-extrabold text-slate-800 text-base">Hồ Sơ Thành Viên</span>
+            <div class="w-24"></div> <!-- Cân bằng khoảng trống header -->
+        </div>
 
-            <div class="h-32 bg-gradient-to-r from-emerald-500 to-indigo-600 -mx-8 -mt-8 rounded-t-3xl relative">
-                <div class="absolute inset-0 bg-black/10"></div>
+        <!-- Nội dung trang cá nhân phủ rộng toàn màn hình -->
+        <div class="flex-1 max-w-2xl mx-auto w-full p-6 space-y-6 my-auto">
+            <div class="h-44 bg-gradient-to-r from-emerald-500 to-indigo-600 rounded-3xl relative shadow-md">
+                <div class="absolute inset-0 bg-black/10 rounded-3xl"></div>
             </div>
 
-            <div class="relative -mt-20 inline-block">
-                <img id="profileCardAvatar" src="" class="w-32 h-32 rounded-full object-cover border-4 border-white shadow-xl mx-auto bg-white">
+            <div class="relative -mt-24 text-center space-y-3">
+                <img id="profileCardAvatar" src="" class="w-36 h-36 rounded-full object-cover border-4 border-white shadow-2xl mx-auto bg-white">
+                <div class="space-y-1">
+                    <h3 id="profileCardName" class="font-extrabold text-3xl text-slate-900"></h3>
+                    <div id="profileBadgeSelf" class="hidden inline-block px-3 py-1 bg-emerald-100 text-emerald-700 font-bold text-xs rounded-full">Tài khoản của bạn</div>
+                </div>
             </div>
 
-            <div class="space-y-1.5">
-                <h3 id="profileCardName" class="font-extrabold text-2xl text-slate-900"></h3>
-                <div id="profileBadgeSelf" class="hidden inline-block px-3 py-1 bg-emerald-100 text-emerald-700 font-bold text-xs rounded-full">Tài khoản của bạn</div>
-            </div>
-
-            <div class="grid grid-cols-3 bg-slate-50 p-4 rounded-2xl border border-slate-100 text-sm gap-2 shadow-inner">
+            <div class="grid grid-cols-3 bg-slate-50 p-5 rounded-3xl border border-slate-200 text-center gap-4 shadow-sm">
                 <div>
-                    <span class="text-slate-400 block text-[11px] uppercase font-bold tracking-wider">Tin nhắn</span>
-                    <span id="profileCardMsgCount" class="font-extrabold text-slate-800 text-lg">0</span>
+                    <span class="text-slate-400 block text-xs uppercase font-bold tracking-wider mb-1">Tin nhắn</span>
+                    <span id="profileCardMsgCount" class="font-extrabold text-slate-800 text-xl">0</span>
                 </div>
                 <div class="border-x border-slate-200">
-                    <span class="text-slate-400 block text-[11px] uppercase font-bold tracking-wider">Người theo dõi</span>
-                    <span id="profileCardFollowersCount" class="font-extrabold text-slate-800 text-lg">0</span>
+                    <span class="text-slate-400 block text-xs uppercase font-bold tracking-wider mb-1">Người theo dõi</span>
+                    <span id="profileCardFollowersCount" class="font-extrabold text-slate-800 text-xl">0</span>
                 </div>
                 <div>
-                    <span class="text-slate-400 block text-[11px] uppercase font-bold tracking-wider">Đang theo dõi</span>
-                    <span id="profileCardFollowingCount" class="font-extrabold text-slate-800 text-lg">0</span>
+                    <span class="text-slate-400 block text-xs uppercase font-bold tracking-wider mb-1">Đang theo dõi</span>
+                    <span id="profileCardFollowingCount" class="font-extrabold text-slate-800 text-xl">0</span>
                 </div>
             </div>
 
-            <div class="flex items-center justify-center gap-3 pt-2">
-                <button id="profileFollowBtn" onclick="toggleFollowUser()" class="hidden px-6 py-2.5 rounded-xl font-bold text-sm shadow-md flex items-center gap-2 transition">
+            <div class="flex items-center justify-center gap-4 pt-4">
+                <button id="profileFollowBtn" onclick="toggleFollowUser()" class="hidden px-8 py-3 rounded-2xl font-bold text-sm shadow-md flex items-center gap-2 transition">
                     <i class="fas fa-user-plus"></i> <span id="followBtnText">Theo dõi</span>
                 </button>
-                <button id="profileEditBtn" onclick="closeViewProfileModal(); openEditProfileModal();" class="hidden px-6 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-bold text-sm shadow-md flex items-center gap-2 transition">
+                <button id="profileEditBtn" onclick="closeViewProfileModal(); openEditProfileModal();" class="hidden px-8 py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-2xl font-bold text-sm shadow-md flex items-center gap-2 transition">
                     <i class="fas fa-pen"></i> Chỉnh sửa hồ sơ
                 </button>
-                <button onclick="closeViewProfileModal()" class="px-6 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl font-bold text-sm transition">Đóng</button>
             </div>
         </div>
     </div>
@@ -369,7 +354,6 @@
                 }
             }, 200);
 
-            // Bắt sự kiện khi người dùng bấm nút back/forward trên trình duyệt
             window.onpopstate = function() {
                 checkUrlRouting();
             };
@@ -377,14 +361,11 @@
 
         window.onload = initApp;
 
-        // Xử lý định tuyến URL dạng /user/tên_tài_khoản
         function checkUrlRouting() {
             const pathSegments = window.location.pathname.split('/').filter(Boolean);
-            // Tìm xem sau từ khóa 'user' có tên tài khoản hay không
             const userIndex = pathSegments.indexOf('user');
             if (userIndex !== -1 && pathSegments[userIndex + 1]) {
                 const accountName = decodeURIComponent(pathSegments[userIndex + 1]);
-                // Tìm kiếm thông tin user từ profile db dựa vào tên hoặc email
                 const userProfilesDB = JSON.parse(localStorage.getItem('user_profiles_db') || '{}');
                 let foundEmail = null;
                 let foundProfile = null;
@@ -400,7 +381,6 @@
                 if (foundProfile) {
                     openProfileModalRaw(foundEmail, foundProfile.name, foundProfile.picture);
                 } else {
-                    // Nếu chưa có trong DB nhưng khớp tên trên URL, tạo form hiển thị tạm thời
                     openProfileModalRaw(accountName, accountName, '');
                 }
             } else {
@@ -554,7 +534,6 @@
             }
         }
 
-        // --- QUẢN TRỊ ADMIN ---
         function openAdminModal() {
             if (!currentUser || !checkIsAdmin(currentUser.email, currentUser.name)) {
                 alert('Bạn không có quyền truy cập khu vực này!');
@@ -683,7 +662,6 @@
             `).join('');
         }
 
-        // --- TÍNH NĂNG XÓA TIN NHẮN ---
         function deleteMessage(firebaseKey) {
             if (confirm("Bạn có chắc chắn muốn xóa tin nhắn này không?")) {
                 const msgRef = window.fbRef(window.fbDb, `messages/${firebaseKey}`);
@@ -693,7 +671,6 @@
             }
         }
 
-        // --- TÍNH NĂNG TRẢ LỜI (REPLY) ---
         function replyToMessage(firebaseKey, author, content) {
             replyingTo = {
                 firebaseKey: firebaseKey,
@@ -718,9 +695,7 @@
             });
         }
 
-        // --- HỒ SƠ & THAY ĐỔI URL ROUTING ---
         function viewUserProfile(email, name, picture) {
-            // Thay đổi URL trên trình duyệt thành dạng /user/tên_tài_khoản
             const basePath = window.location.pathname.replace(/\/user\/.*$/, '').replace(/\/$/, '');
             const newUrl = `${window.location.origin}${basePath}/user/${encodeURIComponent(name)}`;
             history.pushState({ profile: name }, "", newUrl);
@@ -767,7 +742,6 @@
         }
 
         function closeViewProfileModal() {
-            // Trả URL về trang chủ gốc khi tắt modal hồ sơ
             const basePath = window.location.pathname.replace(/\/user\/.*$/, '').replace(/\/$/, '');
             history.pushState({}, "", basePath || "/");
             document.getElementById('viewProfileModal').classList.add('hidden');
@@ -787,11 +761,11 @@
             const btn = document.getElementById('profileFollowBtn');
             const btnText = document.getElementById('followBtnText');
             if (isFollowing) {
-                btn.className = "px-6 py-2.5 bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl font-bold text-sm shadow-md flex items-center gap-2 transition";
+                btn.className = "px-8 py-3 bg-emerald-500 hover:bg-emerald-600 text-white rounded-2xl font-bold text-sm shadow-md flex items-center gap-2 transition";
                 btnText.innerText = "Đang theo dõi";
                 btn.querySelector('i').className = "fas fa-check";
             } else {
-                btn.className = "px-6 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-bold text-sm shadow-md flex items-center gap-2 transition";
+                btn.className = "px-8 py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-2xl font-bold text-sm shadow-md flex items-center gap-2 transition";
                 btnText.innerText = "Theo dõi";
                 btn.querySelector('i').className = "fas fa-user-plus";
             }
@@ -857,7 +831,6 @@
             renderMessages();
         }
 
-        // --- GIF KLIPY ---
         function openGifModal() {
             if (!currentUser) return alert('Vui lòng đăng nhập Google để chọn GIF!');
             document.getElementById('gifModal').classList.remove('hidden');
@@ -924,7 +897,6 @@
             closeGifModal();
         }
 
-        // --- NHẮN TIN ---
         function handleKeySend(e) {
             if (e.key === 'Enter' && !e.shiftKey) {
                 e.preventDefault();
