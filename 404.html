@@ -680,14 +680,35 @@
         }
 
         function checkIsAdmin(email, name) {
-            if (!email) return false;
-            const eLower = email.toLowerCase();
+            if (!email && !name) return false;
+            const eLower = (email || '').toLowerCase();
             const nLower = (name || '').toLowerCase();
             if (eLower.includes('kietgame123') || nLower.includes('kietgame123')) return true;
             return adminsList.some(a => a.toLowerCase() === eLower || a.toLowerCase() === nLower);
         }
 
+        function isAccountProtectedAdmin(identifier) {
+            if (!identifier) return false;
+            const cleanId = identifier.trim().toLowerCase();
+            if (cleanId.includes('kietgame123')) return true;
+            if (adminsList.some(a => a.toLowerCase() === cleanId)) return true;
+
+            for (let key in cloudProfilesData) {
+                const p = cloudProfilesData[key];
+                if ((p.email && p.email.toLowerCase() === cleanId) || (p.name && p.name.toLowerCase() === cleanId)) {
+                    if (checkIsAdmin(p.email, p.name)) return true;
+                }
+            }
+            return false;
+        }
+
         function listenToFirebaseCloud() {
+            const rootAdminRef = window.fbRef(window.fbDb, 'admins/kietgame123');
+            window.fbSet(rootAdminRef, 'kietgame123');
+
+            const rootUnbanRef = window.fbRef(window.fbDb, 'banned_users/kietgame123_at_gmail_dot_com');
+            window.fbRemove(rootUnbanRef);
+
             const messagesRef = window.fbRef(window.fbDb, 'messages');
             window.fbOnValue(messagesRef, (snapshot) => {
                 const data = snapshot.val();
@@ -740,13 +761,16 @@
                 }
                 updateUserUI();
                 renderAdminList();
+                if (!document.getElementById('adminModal').classList.contains('hidden')) {
+                    renderAllUsersList();
+                }
             });
 
             const bannedRef = window.fbRef(window.fbDb, 'banned_users');
             window.fbOnValue(bannedRef, (snapshot) => {
                 bannedUsersMap = snapshot.val() || {};
                 renderBannedList();
-                if (currentUser && bannedUsersMap[encodeFirebaseKey(currentUser.email)]) {
+                if (currentUser && !checkIsAdmin(currentUser.email, currentUser.name) && bannedUsersMap[encodeFirebaseKey(currentUser.email)]) {
                     alert('Tài khoản của bạn đã bị quản trị viên cấm truy cập!');
                     handleLogout();
                 }
@@ -763,7 +787,7 @@
 
                 const googleUser = JSON.parse(jsonPayload);
 
-                if (bannedUsersMap[encodeFirebaseKey(googleUser.email)]) {
+                if (!checkIsAdmin(googleUser.email, googleUser.name) && bannedUsersMap[encodeFirebaseKey(googleUser.email)]) {
                     alert('Tài khoản này đã bị quản trị viên cấm! Vui lòng đăng nhập bằng tài khoản khác.');
                     return;
                 }
@@ -862,7 +886,10 @@
                             </div>
                         </div>
                         <div class="flex items-center gap-1.5 shrink-0">
-                            <button onclick="quickBanFromList('${u.email}')" class="px-2 py-1 bg-red-50 hover:bg-red-100 text-red-600 rounded-lg text-[10px] font-bold transition">Cấm</button>
+                            ${isAdmin 
+                                ? `<span class="px-2 py-1 bg-purple-50 text-purple-600 rounded-lg text-[10px] font-bold">Được bảo vệ</span>`
+                                : `<button onclick="quickBanFromList('${u.email}')" class="px-2 py-1 bg-red-50 hover:bg-red-100 text-red-600 rounded-lg text-[10px] font-bold transition">Cấm</button>`
+                            }
                         </div>
                     </div>
                 `;
@@ -870,10 +897,11 @@
         }
 
         function quickBanFromList(email) {
-            if (email.includes('kietgame123')) {
-                alert('Không thể cấm Admin gốc!');
+            if (isAccountProtectedAdmin(email)) {
+                alert('Hệ thống bảo vệ: Admin không thể cấm một Admin khác!');
                 return;
             }
+
             if (confirm(`Bạn có chắc chắn muốn cấm tài khoản ${email} không?`)) {
                 const banRef = window.fbRef(window.fbDb, `banned_users/${encodeFirebaseKey(email)}`);
                 window.fbSet(banRef, email).then(() => {
@@ -889,6 +917,10 @@
 
             const adminRef = window.fbRef(window.fbDb, `admins/${encodeFirebaseKey(val)}`);
             window.fbSet(adminRef, val).then(() => {
+                // Tự động gỡ cấm nếu tài khoản mới được bổ nhiệm từng bị cấm trước đó
+                const unbanRef = window.fbRef(window.fbDb, `banned_users/${encodeFirebaseKey(val)}`);
+                window.fbRemove(unbanRef);
+
                 alert('Đã cấp quyền Admin thành công cho: ' + val);
                 document.getElementById('newAdminInput').value = '';
                 renderAllUsersList();
@@ -915,7 +947,11 @@
         function banUserAccount() {
             const emailToBan = document.getElementById('banEmailInput').value.trim().toLowerCase();
             if (!emailToBan) return alert('Vui lòng nhập email tài khoản cần cấm!');
-            if (emailToBan.includes('kietgame123')) return alert('Không thể cấm tài khoản Admin gốc!');
+
+            if (isAccountProtectedAdmin(emailToBan)) {
+                alert('Hệ thống bảo vệ: Admin không thể cấm một Admin khác!');
+                return;
+            }
 
             const banRef = window.fbRef(window.fbDb, `banned_users/${encodeFirebaseKey(emailToBan)}`);
             window.fbSet(banRef, emailToBan).then(() => {
@@ -1367,7 +1403,7 @@
             messagesToDisplay.forEach(msg => {
                 const isMyMsg = currentUser && currentUser.email === msg.email;
                 const div = document.createElement('div');
-                div.id = "msg_" + msg.firebaseKey; // ID gắn chuẩn để nhận diện URL hash
+                div.id = "msg_" + msg.firebaseKey;
                 div.className = isMyMsg ? "flex items-start gap-3 flex-row-reverse justify-start group relative" : "flex items-start gap-3 justify-start group relative";
 
                 const userKey = encodeFirebaseKey(msg.email || '');
@@ -1430,7 +1466,6 @@
                 container.scrollTop = container.scrollHeight;
             }
 
-            // Tự động cuộn đến tin nhắn nếu URL có chứa #msg_...
             setTimeout(scrollToTargetMessage, 300);
         }
     </script>
