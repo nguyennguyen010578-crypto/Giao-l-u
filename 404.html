@@ -122,23 +122,7 @@
                 <button onclick="cancelReply()" class="text-slate-400 hover:text-slate-600 px-2 py-1"><i class="fas fa-times"></i></button>
             </div>
 
-            <div class="p-4 bg-white border-t border-slate-200 space-y-3">
-                <!-- CUSTOM H-CAPTCHA (CHUYỂN ĐỘNG CHUỘT TỰ CHẾ) -->
-                <div class="bg-slate-50 border border-slate-200 rounded-2xl p-3 flex items-center justify-between shadow-sm">
-                    <div class="flex items-center gap-3">
-                        <div id="customCaptchaBox" onclick="verifyCustomCaptcha()" class="w-7 h-7 rounded-lg border-2 border-slate-300 bg-white flex items-center justify-center cursor-pointer transition select-none hover:border-indigo-500">
-                            <i id="customCaptchaCheck" class="fas fa-check text-white text-xs hidden"></i>
-                        </div>
-                        <div>
-                            <p class="font-bold text-xs text-slate-700">Xác thực chống Bot (Phân tích chuyển động chuột)</p>
-                            <p id="customCaptchaStatus" class="text-[10px] text-slate-400">Hãy di chuyển chuột trên màn hình và bấm vào ô xác nhận</p>
-                        </div>
-                    </div>
-                    <div class="text-right">
-                        <span id="mouseScoreText" class="text-[10px] bg-slate-200 text-slate-600 px-2 py-1 rounded-full font-bold">Chưa xác thực</span>
-                    </div>
-                </div>
-
+            <div class="p-4 bg-white border-t border-slate-200">
                 <div class="bg-slate-50 border border-slate-200 rounded-2xl p-3 space-y-2 focus-within:border-indigo-500 transition">
                     <textarea id="chatInputText" onkeydown="handleKeySend(event)" placeholder="Nhập tin nhắn giao lưu... (Nhấn Enter để gửi)" rows="2" class="w-full bg-transparent text-xs text-slate-800 placeholder-slate-400 outline-none resize-none"></textarea>
                     
@@ -154,7 +138,7 @@
 
                         <div class="flex items-center gap-3">
                             <span class="text-[10px] text-slate-400">Enter ↵</span>
-                            <button onclick="sendChatMessage()" class="px-4 py-1.5 bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl font-bold shadow transition text-xs flex items-center gap-1.5">
+                            <button onclick="requestSendChatMessage()" class="px-4 py-1.5 bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl font-bold shadow transition text-xs flex items-center gap-1.5">
                                 <i class="fas fa-paper-plane"></i> Gửi
                             </button>
                         </div>
@@ -164,6 +148,40 @@
 
         </div>
     </main>
+
+    <!-- MODAL XÁC THỰC CHỐNG BOT NẰM CHÍNH GIỮA, NỀN MỜ -->
+    <div id="captchaModal" class="fixed inset-0 z-50 bg-slate-900/70 backdrop-blur-sm flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-3xl shadow-2xl max-w-sm w-full p-6 space-y-5 border border-slate-100 text-center relative">
+            <div class="w-12 h-12 bg-indigo-50 text-indigo-600 rounded-2xl mx-auto flex items-center justify-center text-xl shadow mb-1">
+                <i class="fas fa-shield-alt"></i>
+            </div>
+            <div class="space-y-1">
+                <h3 class="font-bold text-base text-slate-800">Xác thực chống Bot</h3>
+                <p class="text-xs text-slate-500">Hệ thống phân tích chuyển động chuột để bảo vệ cộng đồng</p>
+            </div>
+
+            <div class="bg-slate-50 border border-slate-200 rounded-2xl p-4 flex items-center justify-between gap-3 shadow-inner">
+                <div class="flex items-center gap-3 text-left">
+                    <div id="customCaptchaBox" onclick="verifyCustomCaptcha()" class="w-8 h-8 rounded-xl border-2 border-slate-300 bg-white flex items-center justify-center cursor-pointer transition select-none hover:border-indigo-500 shadow-sm shrink-0">
+                        <i id="customCaptchaCheck" class="fas fa-check text-white text-xs hidden"></i>
+                    </div>
+                    <div>
+                        <p class="font-bold text-xs text-slate-700">Tôi không phải người máy</p>
+                        <p id="customCaptchaStatus" class="text-[10px] text-slate-400">Di chuyển chuột và bấm vào ô</p>
+                    </div>
+                </div>
+            </div>
+
+            <div>
+                <span id="mouseScoreText" class="text-[10px] bg-slate-100 text-slate-600 px-3 py-1.5 rounded-full font-bold block">Đang phân tích hành vi chuột...</span>
+            </div>
+
+            <div class="flex items-center justify-end gap-2 pt-3 border-t">
+                <button onclick="closeCaptchaModal()" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-xl font-bold text-xs">Hủy</button>
+                <button onclick="confirmCaptchaAndSend()" class="px-5 py-2 bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl font-bold text-xs shadow">Xác nhận gửi</button>
+            </div>
+        </div>
+    </div>
 
     <input type="file" id="chatImageInput" accept="image/*" class="hidden" onchange="handleChatImage(event)">
     <input type="file" id="avatarFileInput" accept="image/*" class="hidden" onchange="handleAvatarFileSelect(event)">
@@ -199,7 +217,6 @@
                 <button onclick="closeAdminModal()" class="text-slate-400 hover:text-slate-600"><i class="fas fa-times text-lg"></i></button>
             </div>
             <div class="space-y-4">
-                <!-- GỬI THÔNG BÁO TOÀN HỆ THỐNG -->
                 <div class="bg-indigo-50/70 p-3.5 rounded-2xl border border-indigo-200 space-y-2">
                     <label class="block text-xs font-bold text-indigo-800"><i class="fas fa-bullhorn text-indigo-600"></i> Gửi thông báo toàn hệ thống:</label>
                     <div class="flex gap-2">
@@ -373,20 +390,25 @@
         // Biến trạng thái Captcha tự chế theo dõi chuyển động chuột
         let mouseMoveCount = 0;
         let isCaptchaVerified = false;
+        let pendingActionType = null; // Lưu loại hành động chờ xác thực ('text', 'image', 'gif')
+        let pendingDataPayload = null; // Lưu nội dung chờ gửi
 
         window.addEventListener('mousemove', () => {
             if (!isCaptchaVerified) {
                 mouseMoveCount++;
                 if (mouseMoveCount > 15) {
-                    document.getElementById('mouseScoreText').innerText = "Đã ghi nhận chuyển động";
-                    document.getElementById('mouseScoreText').className = "text-[10px] bg-emerald-100 text-emerald-700 px-2 py-1 rounded-full font-bold";
+                    const scoreEl = document.getElementById('mouseScoreText');
+                    if (scoreEl) {
+                        scoreEl.innerText = "Đã ghi nhận hành vi chuyển động hợp lệ";
+                        scoreEl.className = "text-[10px] bg-emerald-100 text-emerald-700 px-3 py-1.5 rounded-full font-bold block";
+                    }
                 }
             }
         });
 
         function verifyCustomCaptcha() {
             if (mouseMoveCount < 10) {
-                alert('Vui lòng di chuyển chuột thêm một chút xung quanh màn hình trước khi xác thực!');
+                alert('Vui lòng di chuyển chuột thêm một chút trên màn hình trước khi xác nhận!');
                 return;
             }
             isCaptchaVerified = true;
@@ -395,12 +417,12 @@
             const status = document.getElementById('customCaptchaStatus');
             const scoreText = document.getElementById('mouseScoreText');
 
-            box.className = "w-7 h-7 rounded-lg border-2 border-emerald-500 bg-emerald-500 flex items-center justify-center cursor-pointer transition select-none shadow";
+            box.className = "w-8 h-8 rounded-xl border-2 border-emerald-500 bg-emerald-500 flex items-center justify-center cursor-pointer transition select-none shadow shrink-0";
             check.classList.remove('hidden');
-            status.innerText = "Xác thực thành công! Bạn là con người.";
+            status.innerText = "Xác thực thành công!";
             status.className = "text-[10px] text-emerald-600 font-bold";
-            scoreText.innerText = "Đã xác thực ✓";
-            scoreText.className = "text-[10px] bg-emerald-500 text-white px-2 py-1 rounded-full font-bold";
+            scoreText.innerText = "Đã xác nhận bạn là con người ✓";
+            scoreText.className = "text-[10px] bg-emerald-500 text-white px-3 py-1.5 rounded-full font-bold block";
         }
 
         function resetCustomCaptcha() {
@@ -411,12 +433,51 @@
             const status = document.getElementById('customCaptchaStatus');
             const scoreText = document.getElementById('mouseScoreText');
 
-            box.className = "w-7 h-7 rounded-lg border-2 border-slate-300 bg-white flex items-center justify-center cursor-pointer transition select-none hover:border-indigo-500";
-            check.classList.add('hidden');
-            status.innerText = "Hãy di chuyển chuột trên màn hình và bấm vào ô xác nhận";
-            status.className = "text-[10px] text-slate-400";
-            scoreText.innerText = "Chưa xác thực";
-            scoreText.className = "text-[10px] bg-slate-200 text-slate-600 px-2 py-1 rounded-full font-bold";
+            if(box && check && status && scoreText) {
+                box.className = "w-8 h-8 rounded-xl border-2 border-slate-300 bg-white flex items-center justify-center cursor-pointer transition select-none hover:border-indigo-500 shadow-sm shrink-0";
+                check.classList.add('hidden');
+                status.innerText = "Di chuyển chuột và bấm vào ô";
+                status.className = "text-[10px] text-slate-400";
+                scoreText.innerText = "Đang phân tích hành vi chuột...";
+                scoreText.className = "text-[10px] bg-slate-100 text-slate-600 px-3 py-1.5 rounded-full font-bold block";
+            }
+        }
+
+        function openCaptchaModal(actionType, payload) {
+            if (isCaptchaVerified) {
+                // Nếu đã xác thực trước đó rồi thì thực hiện luôn
+                executePostCaptchaAction(actionType, payload);
+                return;
+            }
+            pendingActionType = actionType;
+            pendingDataPayload = payload;
+            resetCustomCaptcha();
+            document.getElementById('captchaModal').classList.remove('hidden');
+        }
+
+        function closeCaptchaModal() {
+            document.getElementById('captchaModal').classList.add('hidden');
+            pendingActionType = null;
+            pendingDataPayload = null;
+        }
+
+        function confirmCaptchaAndSend() {
+            if (!isCaptchaVerified) {
+                alert('Vui lòng hoàn thành xác thực chống Bot trước khi tiếp tục!');
+                return;
+            }
+            const type = pendingActionType;
+            const payload = pendingDataPayload;
+            closeCaptchaModal();
+            if (type) {
+                executePostCaptchaAction(type, payload);
+            }
+        }
+
+        function executePostCaptchaAction(type, payload) {
+            if (type === 'text') performSendChatMessage(payload);
+            if (type === 'image') performSendChatImage(payload);
+            if (type === 'gif') performSendGifMessage(payload);
         }
 
         const klipyAppKey = "bk7DCC4zykHHo6BsHvx7EYpCVF3ZcljTcbIe9HtA0OJZEdIec6ZI4fqQrvo9zPK0";
@@ -467,7 +528,6 @@
             });
         }
 
-        // --- HỆ THỐNG THÔNG BÁO (NOTIFICATIONS) ---
         function pushNotificationToUser(targetEmail, title, message, type = 'info') {
             if (!targetEmail || !window.fbDb) return;
             const targetKey = encodeFirebaseKey(targetEmail);
@@ -1110,7 +1170,10 @@
                                     const img = document.createElement('img');
                                     img.src = gifUrl;
                                     img.className = "w-full h-28 object-cover rounded-xl cursor-pointer border hover:border-purple-500 transition hover:scale-[1.02]";
-                                    img.onclick = () => sendGifMessage(gifUrl);
+                                    img.onclick = () => {
+                                        closeGifModal();
+                                        openCaptchaModal('gif', gifUrl);
+                                    };
                                     grid.appendChild(img);
                                 }
                             });
@@ -1124,12 +1187,7 @@
             }, 400);
         }
 
-        function sendGifMessage(gifUrl) {
-            if (!currentUser) return;
-            if (!isCaptchaVerified) {
-                alert('Vui lòng hoàn thành xác thực chuyển động chuột trước khi gửi!');
-                return;
-            }
+        function performSendGifMessage(gifUrl) {
             const replyTarget = replyingTo ? { ...replyingTo } : null;
             const newMsg = {
                 id: Date.now(),
@@ -1149,27 +1207,26 @@
                 cancelReply();
                 resetCustomCaptcha();
             });
-            closeGifModal();
         }
 
         function handleKeySend(e) {
             if (e.key === 'Enter' && !e.shiftKey) {
                 e.preventDefault();
-                sendChatMessage();
+                requestSendChatMessage();
             }
         }
 
-        function sendChatMessage() {
+        function requestSendChatMessage() {
             if (!currentUser) return alert('Vui lòng đăng nhập Google để gửi tin nhắn!');
-            if (!isCaptchaVerified) {
-                alert('Vui lòng hoàn thành xác thực chống Bot (di chuyển chuột và bấm vào ô xác nhận) trước khi gửi!');
-                return;
-            }
-
             const input = document.getElementById('chatInputText');
             const text = input.value.trim();
             if(!text) return;
 
+            openCaptchaModal('text', text);
+        }
+
+        function performSendChatMessage(text) {
+            const input = document.getElementById('chatInputText');
             const replyTarget = replyingTo ? { ...replyingTo } : null;
             const newMsg = {
                 id: Date.now(),
@@ -1203,34 +1260,34 @@
         function handleChatImage(event) {
             const file = event.target.files[0];
             if (!file) return;
-            if (!isCaptchaVerified) {
-                alert('Vui lòng hoàn thành xác thực chuyển động chuột trước khi gửi!');
-                return;
-            }
             const reader = new FileReader();
             reader.onload = function(e) {
-                const replyTarget = replyingTo ? { ...replyingTo } : null;
-                const newMsg = {
-                    id: Date.now(),
-                    author: currentUser.name,
-                    email: currentUser.email,
-                    avatar: currentUser.picture || '',
-                    content: e.target.result,
-                    time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-                    type: 'image',
-                    replyTo: replyTarget
-                };
-                const messagesRef = window.fbRef(window.fbDb, 'messages');
-                window.fbSet(window.fbPush(messagesRef), newMsg).then(() => {
-                    if (replyTarget && replyTarget.email && replyTarget.email !== currentUser.email) {
-                        pushNotificationToUser(replyTarget.email, 'Phản hồi mới', `${currentUser.name} đã trả lời tin nhắn của bạn bằng một hình ảnh.`, 'reply');
-                    }
-                    cancelReply();
-                    resetCustomCaptcha();
-                });
                 event.target.value = '';
+                openCaptchaModal('image', e.target.result);
             };
             reader.readAsDataURL(file);
+        }
+
+        function performSendChatImage(imgData) {
+            const replyTarget = replyingTo ? { ...replyingTo } : null;
+            const newMsg = {
+                id: Date.now(),
+                author: currentUser.name,
+                email: currentUser.email,
+                avatar: currentUser.picture || '',
+                content: imgData,
+                time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+                type: 'image',
+                replyTo: replyTarget
+            };
+            const messagesRef = window.fbRef(window.fbDb, 'messages');
+            window.fbSet(window.fbPush(messagesRef), newMsg).then(() => {
+                if (replyTarget && replyTarget.email && replyTarget.email !== currentUser.email) {
+                    pushNotificationToUser(replyTarget.email, 'Phản hồi mới', `${currentUser.name} đã trả lời tin nhắn của bạn bằng một hình ảnh.`, 'reply');
+                }
+                cancelReply();
+                resetCustomCaptcha();
+            });
         }
 
         function loadMoreOldMessages() {
