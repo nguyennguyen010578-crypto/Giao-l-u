@@ -54,6 +54,20 @@
         </div>
 
         <div class="flex items-center gap-3">
+            <!-- WIDGET SỐ DƯ XU AT -->
+            <div class="flex items-center gap-1.5 bg-amber-50 border border-amber-200 px-3 py-1.5 rounded-full shadow-sm">
+                <div class="w-6 h-6 rounded-full bg-gradient-to-tr from-amber-400 to-yellow-300 border-2 border-amber-500 shadow-inner flex items-center justify-center shrink-0">
+                    <span class="text-[9px] font-extrabold text-amber-900 tracking-tighter">AT</span>
+                </div>
+                <span id="userEnergyCount" class="font-extrabold text-xs text-amber-800">0</span>
+            </div>
+
+            <!-- NÚT ĐIỂM DANH HẰNG NGÀY -->
+            <button onclick="openAttendanceModal()" class="relative text-amber-600 hover:text-amber-700 w-9 h-9 rounded-full bg-amber-50 hover:bg-amber-100 flex items-center justify-center transition shadow-sm" title="Điểm danh hằng ngày">
+                <i class="fas fa-calendar-check text-sm"></i>
+                <span id="attendanceBadge" class="hidden absolute -top-1 -right-1 bg-amber-500 text-white text-[9px] font-bold w-4 h-4 rounded-full flex items-center justify-center shadow">!</span>
+            </button>
+
             <button id="adminSettingBtn" onclick="openAdminModal()" class="hidden text-purple-600 hover:text-purple-800 text-xs px-3 py-1.5 rounded-full bg-purple-50 hover:bg-purple-100 font-bold transition flex items-center gap-1.5 shadow-sm">
                 <i class="fas fa-shield-alt"></i> Cài đặt Admin
             </button>
@@ -182,6 +196,31 @@
         </div>
     </div>
 
+    <!-- MODAL ĐIỂM DANH HẰNG NGÀY -->
+    <div id="attendanceModal" class="fixed inset-0 z-50 bg-slate-900/70 backdrop-blur-sm flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-3xl shadow-2xl max-w-md w-full p-6 space-y-5 border border-slate-100 relative">
+            <div class="flex items-center justify-between border-b pb-3">
+                <h3 class="font-bold text-base text-slate-800 flex items-center gap-2">
+                    <i class="fas fa-calendar-check text-amber-500"></i> Điểm Danh Hằng Ngày Nhận Xu AT
+                </h3>
+                <button onclick="closeAttendanceModal()" class="text-slate-400 hover:text-slate-600"><i class="fas fa-times text-lg"></i></button>
+            </div>
+
+            <p class="text-xs text-slate-500 text-center">Điểm danh mỗi ngày để tích lũy xu AT. Chuỗi điểm danh sẽ reset về Ngày 1 sau khi hoàn thành mốc Ngày 7!</p>
+
+            <!-- LƯỚI 7 NGÀY ĐIỂM DANH -->
+            <div id="attendanceGrid" class="grid grid-cols-4 gap-2.5 py-2">
+                <!-- Render bằng JS -->
+            </div>
+
+            <div class="flex items-center justify-between pt-3 border-t">
+                <button id="claimAttendanceBtn" onclick="claimDailyAttendance()" class="w-full py-2.5 bg-amber-500 hover:bg-amber-600 text-white rounded-xl font-bold text-xs shadow transition flex items-center justify-center gap-2">
+                    <i class="fas fa-gift"></i> Điểm danh ngay hôm nay
+                </button>
+            </div>
+        </div>
+    </div>
+
     <input type="file" id="chatImageInput" accept="image/*" class="hidden" onchange="handleChatImage(event)">
     <input type="file" id="avatarFileInput" accept="image/*" class="hidden" onchange="handleAvatarFileSelect(event)">
 
@@ -240,7 +279,7 @@
                 <div class="bg-slate-50 p-3.5 rounded-2xl border space-y-2">
                     <label class="block text-xs font-bold text-slate-700"><i class="fas fa-ban text-red-500"></i> Cấm (Ban) tài khoản người dùng:</label>
                     <div class="flex gap-2">
-                        <input type="text" id="banEmailInput" placeholder="Nhập email tài khoản cần cấm..." class="w-full px-3 py-2 border rounded-xl text-xs outline-none focus:border-red-500">
+                        <input type="text" id="banEmailInput" placeholder="Nhập email hoặc tên tài khoản cần cấm..." class="w-full px-3 py-2 border rounded-xl text-xs outline-none focus:border-red-500">
                         <button onclick="banUserAccount()" class="px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-xl text-xs font-bold shadow shrink-0">Cấm ngay</button>
                     </div>
                 </div>
@@ -278,7 +317,7 @@
         </div>
     </div>
 
-    <!-- TRANG CÁ NHÂN BAO QUÁT TOÀN BỘ MÀN HÌNH (FULL SCREEN PROFILE) -->
+    <!-- TRANG CÁ NHÂN -->
     <div id="viewProfileModal" class="fixed inset-0 z-50 bg-white flex flex-col hidden overflow-y-auto">
         <div class="h-16 border-b border-slate-200 px-6 flex items-center justify-between bg-white sticky top-0 z-20 shadow-sm">
             <button onclick="closeViewProfileModal()" class="flex items-center gap-2 text-slate-600 hover:text-slate-900 font-bold text-sm bg-slate-100 hover:bg-slate-200 px-4 py-2 rounded-xl transition">
@@ -385,6 +424,10 @@
         let searchTimeout = null;
         let replyingTo = null;
         let visibleMessageLimit = 20;
+
+        let userEnergy = 0;
+        const attendanceRewards = [10, 20, 40, 70, 100, 140, 200];
+        let attendanceData = { lastCheckInDate: "", streakDay: 0 };
 
         let mouseMoveCount = 0;
         let isCaptchaVerified = false; 
@@ -504,7 +547,7 @@
                     currentUser = JSON.parse(savedUser);
                     document.getElementById('loginModal').classList.add('hidden');
                     updateUserUI();
-                    openInitialCaptchaModal(); // Xác minh ngay khi vừa vào trang
+                    openInitialCaptchaModal(); 
                 } else {
                     document.getElementById('loginModal').classList.remove('hidden');
                 }
@@ -517,6 +560,8 @@
                     if (currentUser) {
                         syncUserProfileToCloud(currentUser);
                         listenToUserNotifications(currentUser.email);
+                        loadUserEnergy(currentUser.email);
+                        loadUserAttendance(currentUser.email);
                     }
                     checkUrlRouting();
                 }
@@ -528,6 +573,143 @@
         }
 
         window.onload = initApp;
+
+        function loadUserEnergy(email) {
+            if (!email || !window.fbDb) return;
+            const userKey = encodeFirebaseKey(email);
+            const energyRef = window.fbRef(window.fbDb, `user_energies/${userKey}`);
+            
+            window.fbOnValue(energyRef, (snapshot) => {
+                const val = snapshot.val();
+                userEnergy = val !== null ? val : 100;
+                updateEnergyUI();
+                if (val === null) {
+                    window.fbSet(energyRef, userEnergy);
+                }
+            });
+        }
+
+        function updateEnergyUI() {
+            const energyEl = document.getElementById('userEnergyCount');
+            if (energyEl) energyEl.innerText = userEnergy;
+        }
+
+        function addEnergy(amount) {
+            if (!currentUser || !window.fbDb) return;
+            userEnergy += amount;
+            updateEnergyUI();
+            
+            const userKey = encodeFirebaseKey(currentUser.email);
+            const energyRef = window.fbRef(window.fbDb, `user_energies/${userKey}`);
+            window.fbSet(energyRef, userEnergy);
+        }
+
+        function openAttendanceModal() {
+            if (!currentUser) return alert('Vui lòng đăng nhập để thực hiện điểm danh!');
+            renderAttendanceGrid();
+            document.getElementById('attendanceModal').classList.remove('hidden');
+        }
+
+        function closeAttendanceModal() {
+            document.getElementById('attendanceModal').classList.add('hidden');
+        }
+
+        function loadUserAttendance(email) {
+            if (!email || !window.fbDb) return;
+            const userKey = encodeFirebaseKey(email);
+            const attRef = window.fbRef(window.fbDb, `user_attendance/${userKey}`);
+            
+            window.fbOnValue(attRef, (snapshot) => {
+                const val = snapshot.val();
+                attendanceData = val ? val : { lastCheckInDate: "", streakDay: 0 };
+                checkAttendanceStatusToday();
+            });
+        }
+
+        function checkAttendanceStatusToday() {
+            const todayStr = new Date().toISOString().split('T')[0];
+            const badge = document.getElementById('attendanceBadge');
+            const btn = document.getElementById('claimAttendanceBtn');
+
+            if (attendanceData.lastCheckInDate === todayStr) {
+                if (badge) badge.classList.add('hidden');
+                if (btn) {
+                    btn.innerText = "Đã điểm danh hôm nay ✓";
+                    btn.className = "w-full py-2.5 bg-slate-200 text-slate-500 rounded-xl font-bold text-xs cursor-not-allowed";
+                    btn.disabled = true;
+                }
+            } else {
+                if (badge) badge.classList.remove('hidden');
+                if (btn) {
+                    btn.innerText = "Điểm danh ngay hôm nay";
+                    btn.className = "w-full py-2.5 bg-amber-500 hover:bg-amber-600 text-white rounded-xl font-bold text-xs shadow transition flex items-center justify-center gap-2";
+                    btn.disabled = false;
+                }
+            }
+        }
+
+        function renderAttendanceGrid() {
+            const grid = document.getElementById('attendanceGrid');
+            if (!grid) return;
+
+            const todayStr = new Date().toISOString().split('T')[0];
+            const checkedToday = attendanceData.lastCheckInDate === todayStr;
+
+            grid.innerHTML = attendanceRewards.map((reward, index) => {
+                const dayNum = index + 1;
+                let isDone = dayNum <= attendanceData.streakDay;
+                let isCurrent = dayNum === attendanceData.streakDay + 1 && !checkedToday;
+
+                let cardClass = "bg-slate-50 border-slate-200 text-slate-600";
+                let iconHtml = `<span class="text-xs font-bold">${reward} AT</span>`;
+
+                if (isDone) {
+                    cardClass = "bg-amber-50 border-amber-300 text-amber-800 shadow-sm";
+                    iconHtml = `<i class="fas fa-check-circle text-amber-600 text-sm"></i>`;
+                } else if (isCurrent) {
+                    cardClass = "bg-amber-500 border-amber-600 text-white ring-2 ring-amber-300 shadow-md animate-pulse";
+                    iconHtml = `<span class="text-xs font-bold text-white">${reward} AT</span>`;
+                }
+
+                return `
+                    <div class="flex flex-col items-center justify-center p-3 rounded-2xl border ${cardClass} transition">
+                        <span class="text-[10px] font-bold opacity-70 mb-1">Ngày ${dayNum}</span>
+                        <div class="w-8 h-8 rounded-full bg-white/80 border flex items-center justify-center shadow-inner mb-1">
+                            <span class="text-[9px] font-black text-amber-700">AT</span>
+                        </div>
+                        ${iconHtml}
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function claimDailyAttendance() {
+            if (!currentUser || !window.fbDb) return;
+            const todayStr = new Date().toISOString().split('T')[0];
+
+            if (attendanceData.lastCheckInDate === todayStr) {
+                return alert('Bạn đã điểm danh ngày hôm nay rồi!');
+            }
+
+            let nextStreak = attendanceData.streakDay + 1;
+            if (nextStreak > 7) nextStreak = 1;
+
+            const rewardCoins = attendanceRewards[nextStreak - 1];
+
+            attendanceData.streakDay = nextStreak;
+            attendanceData.lastCheckInDate = todayStr;
+
+            const userKey = encodeFirebaseKey(currentUser.email);
+            const attRef = window.fbRef(window.fbDb, `user_attendance/${userKey}`);
+            
+            window.fbSet(attRef, attendanceData).then(() => {
+                addEnergy(rewardCoins);
+                alert(`Điểm danh thành công Ngày ${nextStreak}! Bạn nhận được +${rewardCoins} xu AT.`);
+                checkAttendanceStatusToday();
+                renderAttendanceGrid();
+                closeAttendanceModal();
+            });
+        }
 
         function syncUserProfileToCloud(user) {
             if (!user || !user.email || !window.fbDb) return;
@@ -814,8 +996,10 @@
                 updateUserUI();
                 syncUserProfileToCloud(currentUser);
                 listenToUserNotifications(currentUser.email);
+                loadUserEnergy(currentUser.email);
+                loadUserAttendance(currentUser.email);
                 renderMessages();
-                openInitialCaptchaModal(); // Xác minh ngay sau khi đăng nhập
+                openInitialCaptchaModal(); 
             } catch (error) {
                 alert('Lỗi xác thực tài khoản Google!');
             }
@@ -915,6 +1099,13 @@
             if (confirm(`Bạn có chắc chắn muốn cấm tài khoản ${email} không?`)) {
                 const banRef = window.fbRef(window.fbDb, `banned_users/${encodeFirebaseKey(email)}`);
                 window.fbSet(banRef, email).then(() => {
+                    pushNotificationToUser(
+                        email, 
+                        'Thông báo khóa tài khoản', 
+                        'Tài khoản của bạn đã bị quản trị viên cấm truy cập khỏi hệ thống giao lưu cộng đồng do vi phạm nội quy.', 
+                        'admin'
+                    );
+
                     alert(`Đã cấm thành công ${email}!`);
                     renderAllUsersList();
                 });
@@ -925,12 +1116,38 @@
             const val = document.getElementById('newAdminInput').value.trim().toLowerCase();
             if (!val) return alert('Vui lòng nhập email hoặc tên tài khoản!');
 
-            const adminRef = window.fbRef(window.fbDb, `admins/${encodeFirebaseKey(val)}`);
-            window.fbSet(adminRef, val).then(() => {
-                const unbanRef = window.fbRef(window.fbDb, `banned_users/${encodeFirebaseKey(val)}`);
+            let matchedProfile = null;
+            for (let key in cloudProfilesData) {
+                const p = cloudProfilesData[key];
+                if ((p.email && p.email.toLowerCase() === val) || (p.name && p.name.toLowerCase() === val)) {
+                    matchedProfile = p;
+                    break;
+                }
+            }
+
+            if (!matchedProfile) {
+                alert('Không có tài khoản này trên hệ thống! (Người dùng cần đăng nhập ít nhất 1 lần)');
+                return;
+            }
+
+            const targetEmail = matchedProfile.email.toLowerCase();
+            const targetKey = encodeFirebaseKey(targetEmail);
+            if (bannedUsersMap[targetKey]) {
+                alert(`Tài khoản ${matchedProfile.name} (${targetEmail}) hiện đang bị cấm (Ban), không thể bổ nhiệm làm Admin!`);
+                return;
+            }
+
+            if (checkIsAdmin(targetEmail, matchedProfile.name)) {
+                alert(`Tài khoản ${matchedProfile.name} đã là Admin rồi!`);
+                return;
+            }
+
+            const adminRef = window.fbRef(window.fbDb, `admins/${targetKey}`);
+            window.fbSet(adminRef, targetEmail).then(() => {
+                const unbanRef = window.fbRef(window.fbDb, `banned_users/${targetKey}`);
                 window.fbRemove(unbanRef);
 
-                alert('Đã cấp quyền Admin thành công cho: ' + val);
+                alert(`Đã cấp quyền Admin thành công cho ${matchedProfile.name} (${targetEmail})!`);
                 document.getElementById('newAdminInput').value = '';
                 renderAllUsersList();
             });
@@ -954,8 +1171,24 @@
         }
 
         function banUserAccount() {
-            const emailToBan = document.getElementById('banEmailInput').value.trim().toLowerCase();
-            if (!emailToBan) return alert('Vui lòng nhập email tài khoản cần cấm!');
+            const inputVal = document.getElementById('banEmailInput').value.trim().toLowerCase();
+            if (!inputVal) return alert('Vui lòng nhập email hoặc tên tài khoản cần cấm!');
+
+            let matchedProfile = null;
+            for (let key in cloudProfilesData) {
+                const p = cloudProfilesData[key];
+                if ((p.email && p.email.toLowerCase() === inputVal) || (p.name && p.name.toLowerCase() === inputVal)) {
+                    matchedProfile = p;
+                    break;
+                }
+            }
+
+            if (!matchedProfile) {
+                alert('Không có tài khoản này trên hệ thống! Vui lòng kiểm tra lại email hoặc tên hiển thị.');
+                return;
+            }
+
+            const emailToBan = matchedProfile.email.toLowerCase();
 
             if (isAccountProtectedAdmin(emailToBan)) {
                 alert('Hệ thống bảo vệ: Admin không thể cấm một Admin khác!');
@@ -964,7 +1197,14 @@
 
             const banRef = window.fbRef(window.fbDb, `banned_users/${encodeFirebaseKey(emailToBan)}`);
             window.fbSet(banRef, emailToBan).then(() => {
-                alert(`Đã cấm thành công tài khoản ${emailToBan}!`);
+                pushNotificationToUser(
+                    emailToBan, 
+                    'Thông báo khóa tài khoản', 
+                    'Tài khoản của bạn đã bị quản trị viên cấm truy cập khỏi hệ thống giao lưu cộng đồng do vi phạm nội quy.', 
+                    'admin'
+                );
+
+                alert(`Đã cấm thành công tài khoản ${emailToBan} (${matchedProfile.name})!`);
                 document.getElementById('banEmailInput').value = '';
                 renderAllUsersList();
             });
