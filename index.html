@@ -839,20 +839,24 @@
             document.getElementById('editAvatarPreview').src = srcUrl;
         }
 
-        function saveUserProfile() {
-            const newName = document.getElementById('editNameInput').value.trim();
-            if (!newName) return alert('Tên không được để trống!');
+function saveUserProfile() {
+    const newName = document.getElementById('editNameInput').value.trim();
+    if (!newName) return alert('Tên không được để trống!');
 
-            currentUser.name = newName;
-            currentUser.picture = tempAvatarData;
+    currentUser.name = newName;
+    currentUser.picture = tempAvatarData;
 
-            localStorage.setItem('real_google_chat_user', JSON.stringify(currentUser));
-            syncUserProfileToCloud(currentUser);
+    // Lưu vào localStorage cục bộ
+    localStorage.setItem('real_google_chat_user', JSON.stringify(currentUser));
+    
+    // Đồng bộ trực tiếp lên Firebase Cloud
+    syncUserProfileToCloud(currentUser);
 
-            updateUserUI();
-            closeEditProfileModal();
-            renderMessages();
-        }
+    updateUserUI();
+    closeEditProfileModal();
+    renderMessages();
+    alert("Đã lưu hồ sơ thành công!");
+}
 
         function openGifModal() {
             if (!currentUser) return alert('Vui lòng đăng nhập Google để chọn GIF!');
