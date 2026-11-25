@@ -18,7 +18,7 @@
     <!-- FIREBASE SDK V10 -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getDatabase, ref, push, set, onValue, remove } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+        import { getDatabase, ref, push, set, onValue, remove, update } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyA8--ixFCWWvFGcIB4DpeXxigkTfci9Ltc",
@@ -39,6 +39,7 @@
         window.fbSet = set;
         window.fbOnValue = onValue;
         window.fbRemove = remove;
+        window.fbUpdate = update;
     </script>
 </head>
 <body class="bg-slate-100 text-slate-800 h-screen flex flex-col font-sans select-none m-0 p-0">
@@ -57,6 +58,25 @@
                 <i class="fas fa-shield-alt"></i> Cài đặt Admin
             </button>
 
+            <!-- NÚT MỤC THÔNG BÁO (BELL ICON) -->
+            <div id="notificationWrapper" class="relative hidden">
+                <button onclick="toggleNotificationDropdown()" class="relative text-slate-600 hover:text-indigo-600 w-9 h-9 rounded-full bg-slate-100 hover:bg-slate-200 flex items-center justify-center transition" title="Thông báo">
+                    <i class="fas fa-bell text-sm"></i>
+                    <span id="unreadNotifBadge" class="hidden absolute -top-1 -right-1 bg-red-500 text-white text-[10px] font-bold w-4 h-4 rounded-full flex items-center justify-center shadow">0</span>
+                </button>
+
+                <!-- DROPDOWN DANH SÁCH THÔNG BÁO -->
+                <div id="notificationDropdown" class="hidden absolute right-0 mt-2 w-80 bg-white rounded-2xl shadow-2xl border border-slate-200 z-50 overflow-hidden">
+                    <div class="px-4 py-3 border-b border-slate-100 flex items-center justify-between bg-slate-50">
+                        <span class="font-bold text-xs text-slate-800"><i class="fas fa-bell text-indigo-600 mr-1"></i> Thông báo</span>
+                        <button onclick="markAllNotificationsRead()" class="text-[11px] text-indigo-600 hover:underline font-semibold">Đọc tất cả</button>
+                    </div>
+                    <div id="notificationListContainer" class="max-h-72 overflow-y-auto divide-y divide-slate-100 text-xs">
+                        <div class="p-6 text-center text-slate-400">Chưa có thông báo nào.</div>
+                    </div>
+                </div>
+            </div>
+
             <div id="userProfileGroup" class="hidden flex items-center gap-2">
                 <div class="flex items-center gap-2 bg-slate-100 px-3 py-1.5 rounded-full border border-slate-200 hover:bg-slate-200/60 transition cursor-pointer" onclick="viewUserProfile(currentUser.email, currentUser.name, currentUser.picture)">
                     <img id="userAvatarImg" src="" class="w-7 h-7 rounded-full object-cover border" alt="Avatar">
@@ -73,7 +93,7 @@
     </header>
 
     <!-- MAIN CHAT CONTAINER -->
-    <main class="flex-1 p-4 max-w-4xl mx-auto w-full flex flex-col overflow-hidden">
+    <main class="flex-1 p-4 max-w-4xl mx-auto w-full flex flex-col overflow-hidden" onclick="closeNotificationDropdown()">
         <div class="bg-white rounded-2xl shadow-sm border border-slate-200 flex flex-col flex-1 overflow-hidden">
             
             <div class="px-6 py-3 border-b border-slate-100 flex items-center justify-between bg-white">
@@ -102,7 +122,23 @@
                 <button onclick="cancelReply()" class="text-slate-400 hover:text-slate-600 px-2 py-1"><i class="fas fa-times"></i></button>
             </div>
 
-            <div class="p-4 bg-white border-t border-slate-200">
+            <div class="p-4 bg-white border-t border-slate-200 space-y-3">
+                <!-- CUSTOM H-CAPTCHA (CHUYỂN ĐỘNG CHUỘT TỰ CHẾ) -->
+                <div class="bg-slate-50 border border-slate-200 rounded-2xl p-3 flex items-center justify-between shadow-sm">
+                    <div class="flex items-center gap-3">
+                        <div id="customCaptchaBox" onclick="verifyCustomCaptcha()" class="w-7 h-7 rounded-lg border-2 border-slate-300 bg-white flex items-center justify-center cursor-pointer transition select-none hover:border-indigo-500">
+                            <i id="customCaptchaCheck" class="fas fa-check text-white text-xs hidden"></i>
+                        </div>
+                        <div>
+                            <p class="font-bold text-xs text-slate-700">Xác thực chống Bot (Phân tích chuyển động chuột)</p>
+                            <p id="customCaptchaStatus" class="text-[10px] text-slate-400">Hãy di chuyển chuột trên màn hình và bấm vào ô xác nhận</p>
+                        </div>
+                    </div>
+                    <div class="text-right">
+                        <span id="mouseScoreText" class="text-[10px] bg-slate-200 text-slate-600 px-2 py-1 rounded-full font-bold">Chưa xác thực</span>
+                    </div>
+                </div>
+
                 <div class="bg-slate-50 border border-slate-200 rounded-2xl p-3 space-y-2 focus-within:border-indigo-500 transition">
                     <textarea id="chatInputText" onkeydown="handleKeySend(event)" placeholder="Nhập tin nhắn giao lưu... (Nhấn Enter để gửi)" rows="2" class="w-full bg-transparent text-xs text-slate-800 placeholder-slate-400 outline-none resize-none"></textarea>
                     
@@ -163,6 +199,15 @@
                 <button onclick="closeAdminModal()" class="text-slate-400 hover:text-slate-600"><i class="fas fa-times text-lg"></i></button>
             </div>
             <div class="space-y-4">
+                <!-- GỬI THÔNG BÁO TOÀN HỆ THỐNG -->
+                <div class="bg-indigo-50/70 p-3.5 rounded-2xl border border-indigo-200 space-y-2">
+                    <label class="block text-xs font-bold text-indigo-800"><i class="fas fa-bullhorn text-indigo-600"></i> Gửi thông báo toàn hệ thống:</label>
+                    <div class="flex gap-2">
+                        <input type="text" id="globalNotifInput" placeholder="Nhập nội dung thông báo gửi tất cả thành viên..." class="w-full px-3 py-2 border border-indigo-200 rounded-xl text-xs outline-none focus:border-indigo-500 bg-white">
+                        <button onclick="sendGlobalNotification()" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold shadow shrink-0">Phát ngay</button>
+                    </div>
+                </div>
+
                 <div class="bg-slate-50 p-3.5 rounded-2xl border space-y-2">
                     <label class="block text-xs font-bold text-slate-700"><i class="fas fa-users text-blue-600"></i> Danh sách tài khoản đã tham gia:</label>
                     <div id="allUsersListContainer" class="bg-white p-2 rounded-xl text-xs text-slate-700 max-h-36 overflow-y-auto space-y-1.5 border">
@@ -318,10 +363,61 @@
         let bannedUsersMap = {};
         let cloudFollowsData = {};
         let cloudProfilesData = {};
+        let userNotifications = [];
         let tempAvatarData = null;
         let currentViewingEmail = null;
         let searchTimeout = null;
         let replyingTo = null;
+        let visibleMessageLimit = 20;
+
+        // Biến trạng thái Captcha tự chế theo dõi chuyển động chuột
+        let mouseMoveCount = 0;
+        let isCaptchaVerified = false;
+
+        window.addEventListener('mousemove', () => {
+            if (!isCaptchaVerified) {
+                mouseMoveCount++;
+                if (mouseMoveCount > 15) {
+                    document.getElementById('mouseScoreText').innerText = "Đã ghi nhận chuyển động";
+                    document.getElementById('mouseScoreText').className = "text-[10px] bg-emerald-100 text-emerald-700 px-2 py-1 rounded-full font-bold";
+                }
+            }
+        });
+
+        function verifyCustomCaptcha() {
+            if (mouseMoveCount < 10) {
+                alert('Vui lòng di chuyển chuột thêm một chút xung quanh màn hình trước khi xác thực!');
+                return;
+            }
+            isCaptchaVerified = true;
+            const box = document.getElementById('customCaptchaBox');
+            const check = document.getElementById('customCaptchaCheck');
+            const status = document.getElementById('customCaptchaStatus');
+            const scoreText = document.getElementById('mouseScoreText');
+
+            box.className = "w-7 h-7 rounded-lg border-2 border-emerald-500 bg-emerald-500 flex items-center justify-center cursor-pointer transition select-none shadow";
+            check.classList.remove('hidden');
+            status.innerText = "Xác thực thành công! Bạn là con người.";
+            status.className = "text-[10px] text-emerald-600 font-bold";
+            scoreText.innerText = "Đã xác thực ✓";
+            scoreText.className = "text-[10px] bg-emerald-500 text-white px-2 py-1 rounded-full font-bold";
+        }
+
+        function resetCustomCaptcha() {
+            isCaptchaVerified = false;
+            mouseMoveCount = 0;
+            const box = document.getElementById('customCaptchaBox');
+            const check = document.getElementById('customCaptchaCheck');
+            const status = document.getElementById('customCaptchaStatus');
+            const scoreText = document.getElementById('mouseScoreText');
+
+            box.className = "w-7 h-7 rounded-lg border-2 border-slate-300 bg-white flex items-center justify-center cursor-pointer transition select-none hover:border-indigo-500";
+            check.classList.add('hidden');
+            status.innerText = "Hãy di chuyển chuột trên màn hình và bấm vào ô xác nhận";
+            status.className = "text-[10px] text-slate-400";
+            scoreText.innerText = "Chưa xác thực";
+            scoreText.className = "text-[10px] bg-slate-200 text-slate-600 px-2 py-1 rounded-full font-bold";
+        }
 
         const klipyAppKey = "bk7DCC4zykHHo6BsHvx7EYpCVF3ZcljTcbIe9HtA0OJZEdIec6ZI4fqQrvo9zPK0";
 
@@ -345,7 +441,10 @@
                 if (window.fbDb) {
                     clearInterval(checkDbInterval);
                     listenToFirebaseCloud();
-                    if (currentUser) syncUserProfileToCloud(currentUser);
+                    if (currentUser) {
+                        syncUserProfileToCloud(currentUser);
+                        listenToUserNotifications(currentUser.email);
+                    }
                     checkUrlRouting();
                 }
             }, 200);
@@ -365,6 +464,127 @@
                 name: user.name,
                 picture: user.picture || '',
                 email: user.email
+            });
+        }
+
+        // --- HỆ THỐNG THÔNG BÁO (NOTIFICATIONS) ---
+        function pushNotificationToUser(targetEmail, title, message, type = 'info') {
+            if (!targetEmail || !window.fbDb) return;
+            const targetKey = encodeFirebaseKey(targetEmail);
+            const notifRef = window.fbRef(window.fbDb, `notifications/${targetKey}`);
+            window.fbSet(window.fbPush(notifRef), {
+                title: title,
+                message: message,
+                type: type,
+                read: false,
+                time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) + ' ' + new Date().toLocaleDateString('vi-VN'),
+                timestamp: Date.now()
+            });
+        }
+
+        function sendGlobalNotification() {
+            const input = document.getElementById('globalNotifInput');
+            const msg = input.value.trim();
+            if (!msg) return alert('Vui lòng nhập nội dung thông báo!');
+
+            const userKeys = Object.keys(cloudProfilesData);
+            if (userKeys.length === 0) return alert('Chưa có thành viên nào để gửi thông báo.');
+
+            userKeys.forEach(k => {
+                const targetEmail = cloudProfilesData[k].email;
+                pushNotificationToUser(targetEmail, 'Thông báo từ Quản trị viên', msg, 'admin');
+            });
+
+            input.value = '';
+            alert(`Đã phát thông báo tới ${userKeys.length} thành viên!`);
+        }
+
+        function listenToUserNotifications(email) {
+            if (!email || !window.fbDb) return;
+            const myKey = encodeFirebaseKey(email);
+            const notifRef = window.fbRef(window.fbDb, `notifications/${myKey}`);
+            window.fbOnValue(notifRef, (snapshot) => {
+                const data = snapshot.val();
+                userNotifications = [];
+                if (data) {
+                    Object.keys(data).forEach(key => {
+                        userNotifications.push({ id: key, ...data[key] });
+                    });
+                    userNotifications.sort((a, b) => b.timestamp - a.timestamp);
+                }
+                renderNotifications();
+            });
+        }
+
+        function renderNotifications() {
+            const badge = document.getElementById('unreadNotifBadge');
+            const container = document.getElementById('notificationListContainer');
+            if (!badge || !container) return;
+
+            const unreadCount = userNotifications.filter(n => !n.read).length;
+            if (unreadCount > 0) {
+                badge.innerText = unreadCount > 9 ? '9+' : unreadCount;
+                badge.classList.remove('hidden');
+            } else {
+                badge.classList.add('hidden');
+            }
+
+            if (userNotifications.length === 0) {
+                container.innerHTML = `<div class="p-6 text-center text-slate-400">Chưa có thông báo nào.</div>`;
+                return;
+            }
+
+            container.innerHTML = userNotifications.map(n => {
+                let iconHtml = '<i class="fas fa-info-circle text-indigo-500"></i>';
+                if (n.type === 'follow') iconHtml = '<i class="fas fa-user-plus text-emerald-500"></i>';
+                if (n.type === 'reply') iconHtml = '<i class="fas fa-reply text-blue-500"></i>';
+                if (n.type === 'admin') iconHtml = '<i class="fas fa-bullhorn text-purple-600"></i>';
+
+                return `
+                    <div onclick="markNotificationRead('${n.id}')" class="p-3 hover:bg-slate-50 cursor-pointer transition flex items-start gap-2.5 ${!n.read ? 'bg-indigo-50/40' : ''}">
+                        <div class="w-7 h-7 rounded-full bg-white border flex items-center justify-center shrink-0 mt-0.5 shadow-sm">
+                            ${iconHtml}
+                        </div>
+                        <div class="flex-1 overflow-hidden">
+                            <div class="flex items-center justify-between gap-1">
+                                <p class="font-bold text-slate-800 truncate">${n.title}</p>
+                                ${!n.read ? '<span class="w-2 h-2 bg-indigo-600 rounded-full shrink-0"></span>' : ''}
+                            </div>
+                            <p class="text-slate-600 text-[11px] leading-snug mt-0.5">${n.message}</p>
+                            <span class="text-[10px] text-slate-400 mt-1 block">${n.time}</span>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function toggleNotificationDropdown() {
+            const dropdown = document.getElementById('notificationDropdown');
+            dropdown.classList.toggle('hidden');
+        }
+
+        function closeNotificationDropdown() {
+            const dropdown = document.getElementById('notificationDropdown');
+            if (dropdown && !dropdown.classList.contains('hidden')) {
+                dropdown.classList.add('hidden');
+            }
+        }
+
+        function markNotificationRead(notifId) {
+            if (!currentUser || !window.fbDb) return;
+            const myKey = encodeFirebaseKey(currentUser.email);
+            const itemRef = window.fbRef(window.fbDb, `notifications/${myKey}/${notifId}`);
+            window.fbUpdate(itemRef, { read: true });
+        }
+
+        function markAllNotificationsRead() {
+            if (!currentUser || !window.fbDb) return;
+            const myKey = encodeFirebaseKey(currentUser.email);
+            userNotifications.forEach(n => {
+                if (!n.read) {
+                    const itemRef = window.fbRef(window.fbDb, `notifications/${myKey}/${n.id}`);
+                    window.fbUpdate(itemRef, { read: true });
+                }
             });
         }
 
@@ -497,6 +717,7 @@
                 document.getElementById('loginModal').classList.add('hidden');
                 updateUserUI();
                 syncUserProfileToCloud(currentUser);
+                listenToUserNotifications(currentUser.email);
                 renderMessages();
             } catch (error) {
                 alert('Lỗi xác thực tài khoản Google!');
@@ -508,6 +729,7 @@
             currentUser = null;
             document.getElementById('loginModal').classList.remove('hidden');
             document.getElementById('adminSettingBtn').classList.add('hidden');
+            document.getElementById('notificationWrapper').classList.add('hidden');
             updateUserUI();
         }
 
@@ -516,9 +738,11 @@
             const nameTxt = document.getElementById('userNameText');
             const avatarImg = document.getElementById('userAvatarImg');
             const adminBtn = document.getElementById('adminSettingBtn');
+            const notifWrapper = document.getElementById('notificationWrapper');
 
             if (currentUser) {
                 userGrp.classList.remove('hidden');
+                notifWrapper.classList.remove('hidden');
                 nameTxt.innerText = currentUser.name;
                 if(currentUser.picture) avatarImg.src = currentUser.picture;
 
@@ -529,6 +753,7 @@
                 }
             } else {
                 userGrp.classList.add('hidden');
+                notifWrapper.classList.add('hidden');
                 adminBtn.classList.add('hidden');
             }
         }
@@ -668,10 +893,11 @@
             }
         }
 
-        function replyToMessage(firebaseKey, author, content) {
+        function replyToMessage(firebaseKey, author, content, authorEmail) {
             replyingTo = {
                 firebaseKey: firebaseKey,
                 author: author,
+                email: authorEmail || '',
                 content: content.length > 40 ? content.substring(0, 40) + '...' : content
             };
             document.getElementById('replyingToName').innerText = author;
@@ -796,7 +1022,14 @@
             if (isCurrentlyFollowing) {
                 window.fbRemove(followNodeRef);
             } else {
-                window.fbSet(followNodeRef, true);
+                window.fbSet(followNodeRef, true).then(() => {
+                    pushNotificationToUser(
+                        currentViewingEmail,
+                        'Người theo dõi mới',
+                        `${currentUser.name} đã bắt đầu theo dõi bạn!`,
+                        'follow'
+                    );
+                });
             }
         }
 
@@ -893,6 +1126,11 @@
 
         function sendGifMessage(gifUrl) {
             if (!currentUser) return;
+            if (!isCaptchaVerified) {
+                alert('Vui lòng hoàn thành xác thực chuyển động chuột trước khi gửi!');
+                return;
+            }
+            const replyTarget = replyingTo ? { ...replyingTo } : null;
             const newMsg = {
                 id: Date.now(),
                 author: currentUser.name,
@@ -901,11 +1139,15 @@
                 content: gifUrl,
                 time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
                 type: 'gif',
-                replyTo: replyingTo ? { ...replyingTo } : null
+                replyTo: replyTarget
             };
             const messagesRef = window.fbRef(window.fbDb, 'messages');
             window.fbSet(window.fbPush(messagesRef), newMsg).then(() => {
+                if (replyTarget && replyTarget.email && replyTarget.email !== currentUser.email) {
+                    pushNotificationToUser(replyTarget.email, 'Phản hồi mới', `${currentUser.name} đã trả lời tin nhắn của bạn bằng một GIF.`, 'reply');
+                }
                 cancelReply();
+                resetCustomCaptcha();
             });
             closeGifModal();
         }
@@ -919,10 +1161,16 @@
 
         function sendChatMessage() {
             if (!currentUser) return alert('Vui lòng đăng nhập Google để gửi tin nhắn!');
+            if (!isCaptchaVerified) {
+                alert('Vui lòng hoàn thành xác thực chống Bot (di chuyển chuột và bấm vào ô xác nhận) trước khi gửi!');
+                return;
+            }
+
             const input = document.getElementById('chatInputText');
             const text = input.value.trim();
             if(!text) return;
 
+            const replyTarget = replyingTo ? { ...replyingTo } : null;
             const newMsg = {
                 id: Date.now(),
                 author: currentUser.name,
@@ -931,13 +1179,17 @@
                 content: text,
                 time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
                 type: 'text',
-                replyTo: replyingTo ? { ...replyingTo } : null
+                replyTo: replyTarget
             };
 
             const messagesRef = window.fbRef(window.fbDb, 'messages');
             window.fbSet(window.fbPush(messagesRef), newMsg).then(() => {
+                if (replyTarget && replyTarget.email && replyTarget.email !== currentUser.email) {
+                    pushNotificationToUser(replyTarget.email, 'Phản hồi mới', `${currentUser.name} đã trả lời bạn: "${text.substring(0, 35)}..."`, 'reply');
+                }
                 input.value = '';
                 cancelReply();
+                resetCustomCaptcha();
             }).catch(() => {
                 alert('Không thể gửi tin nhắn. Hãy kiểm tra kết nối Firebase!');
             });
@@ -951,8 +1203,13 @@
         function handleChatImage(event) {
             const file = event.target.files[0];
             if (!file) return;
+            if (!isCaptchaVerified) {
+                alert('Vui lòng hoàn thành xác thực chuyển động chuột trước khi gửi!');
+                return;
+            }
             const reader = new FileReader();
             reader.onload = function(e) {
+                const replyTarget = replyingTo ? { ...replyingTo } : null;
                 const newMsg = {
                     id: Date.now(),
                     author: currentUser.name,
@@ -961,18 +1218,32 @@
                     content: e.target.result,
                     time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
                     type: 'image',
-                    replyTo: replyingTo ? { ...replyingTo } : null
+                    replyTo: replyTarget
                 };
                 const messagesRef = window.fbRef(window.fbDb, 'messages');
                 window.fbSet(window.fbPush(messagesRef), newMsg).then(() => {
+                    if (replyTarget && replyTarget.email && replyTarget.email !== currentUser.email) {
+                        pushNotificationToUser(replyTarget.email, 'Phản hồi mới', `${currentUser.name} đã trả lời tin nhắn của bạn bằng một hình ảnh.`, 'reply');
+                    }
                     cancelReply();
+                    resetCustomCaptcha();
                 });
                 event.target.value = '';
             };
             reader.readAsDataURL(file);
         }
 
-        function renderMessages() {
+        function loadMoreOldMessages() {
+            const container = document.getElementById('chatMessagesContainer');
+            const previousScrollHeight = container.scrollHeight;
+            
+            visibleMessageLimit += 20; 
+            renderMessages(true); 
+
+            container.scrollTop = container.scrollHeight - previousScrollHeight;
+        }
+
+        function renderMessages(preserveScroll = false) {
             const container = document.getElementById('chatMessagesContainer');
             container.innerHTML = '';
 
@@ -983,7 +1254,22 @@
 
             const isAdmin = currentUser ? checkIsAdmin(currentUser.email, currentUser.name) : false;
 
-            messages.forEach(msg => {
+            const totalMessages = messages.length;
+            const startIndex = Math.max(0, totalMessages - visibleMessageLimit);
+            const messagesToDisplay = messages.slice(startIndex);
+
+            if (startIndex > 0) {
+                const loadMoreWrapper = document.createElement('div');
+                loadMoreWrapper.className = "text-center pb-3";
+                loadMoreWrapper.innerHTML = `
+                    <button onclick="loadMoreOldMessages()" class="px-4 py-1.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-600 font-bold text-xs rounded-full border border-indigo-200 shadow-sm transition inline-flex items-center gap-1.5">
+                        <i class="fas fa-history"></i> Xem các tin nhắn cũ hơn (còn ${startIndex} tin)
+                    </button>
+                `;
+                container.appendChild(loadMoreWrapper);
+            }
+
+            messagesToDisplay.forEach(msg => {
                 const isMyMsg = currentUser && currentUser.email === msg.email;
                 const div = document.createElement('div');
                 div.id = "msg_box_" + msg.firebaseKey;
@@ -1022,7 +1308,7 @@
                 const canDelete = isAdmin || isMyMsg;
                 const actionsHtml = `
                     <div class="absolute ${isMyMsg ? 'right-full mr-2' : 'left-full ml-2'} top-2 hidden group-hover:flex items-center gap-1 bg-white border border-slate-200 shadow-sm rounded-lg px-2 py-1 text-[11px] z-10">
-                        <button onclick="replyToMessage('${msg.firebaseKey}', '${safeAuthor}', '${(msg.type === 'text' ? msg.content : '[Đính kèm media]').replace(/'/g, "\\'")}')" class="text-indigo-600 hover:text-indigo-800 px-1" title="Trả lời"><i class="fas fa-reply"></i></button>
+                        <button onclick="replyToMessage('${msg.firebaseKey}', '${safeAuthor}', '${(msg.type === 'text' ? msg.content : '[Đính kèm media]').replace(/'/g, "\\'")}', '${msg.email || ''}')" class="text-indigo-600 hover:text-indigo-800 px-1" title="Trả lời"><i class="fas fa-reply"></i></button>
                         <button onclick="copyMessageLink('${msg.firebaseKey}')" class="text-slate-500 hover:text-slate-700 px-1" title="Sao chép đường dẫn"><i class="fas fa-link"></i></button>
                         ${canDelete ? `<button onclick="deleteMessage('${msg.firebaseKey}')" class="text-red-500 hover:text-red-700 px-1" title="Xóa tin nhắn"><i class="fas fa-trash"></i></button>` : ''}
                     </div>
@@ -1042,7 +1328,9 @@
                 container.appendChild(div);
             });
 
-            container.scrollTop = container.scrollHeight;
+            if (!preserveScroll) {
+                container.scrollTop = container.scrollHeight;
+            }
         }
     </script>
 </body>
