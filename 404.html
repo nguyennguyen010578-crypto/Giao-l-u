@@ -710,31 +710,36 @@
             openProfileModalRaw(email, name, picture);
         }
 
-        function openProfileModalRaw(email, name, picture) {
-            currentViewingEmail = email;
-            const userKey = encodeFirebaseKey(email);
-            const targetProfile = cloudProfilesData[userKey] || { name: name, picture: picture };
+function openProfileModalRaw(email, name, picture) {
+    currentViewingEmail = email;
+    const userKey = encodeFirebaseKey(email);
+    const targetProfile = cloudProfilesData[userKey] || { name: name, picture: picture };
 
-            document.getElementById('profileCardName').innerText = targetProfile.name;
-            document.getElementById('profileCardAvatar').src = targetProfile.picture || `https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(targetProfile.name)}`;
+    document.getElementById('profileCardName').innerText = targetProfile.name;
+    document.getElementById('profileCardAvatar').src = targetProfile.picture || `https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(targetProfile.name)}`;
 
-            updateProfileFollowCounts(email);
+    updateProfileFollowCounts(email);
 
-            const isSelf = currentUser && (currentUser.email === email || currentUser.name.toLowerCase() === name.toLowerCase());
-            const followBtn = document.getElementById('profileFollowBtn');
+    // Kiểm tra chính xác xem có phải trang cá nhân của mình không (so sánh cả email và tên)
+    const isSelf = currentUser && (
+        currentUser.email.toLowerCase() === email.toLowerCase() || 
+        currentUser.name.toLowerCase() === name.toLowerCase()
+    );
+    
+    const followBtn = document.getElementById('profileFollowBtn');
 
-            if (isSelf) {
-                document.getElementById('profileBadgeSelf').classList.remove('hidden');
-                document.getElementById('profileEditBtn').classList.remove('hidden');
-                followBtn.classList.add('hidden');
-            } else {
-                document.getElementById('profileBadgeSelf').classList.add('hidden');
-                document.getElementById('profileEditBtn').classList.add('hidden');
-                followBtn.classList.remove('hidden');
-            }
+    if (isSelf) {
+        document.getElementById('profileBadgeSelf').classList.remove('hidden');
+        document.getElementById('profileEditBtn').classList.remove('hidden');
+        followBtn.classList.add('hidden'); // Ẩn nút theo dõi chính mình
+    } else {
+        document.getElementById('profileBadgeSelf').classList.add('hidden');
+        document.getElementById('profileEditBtn').classList.add('hidden');
+        followBtn.classList.remove('hidden');
+    }
 
-            document.getElementById('viewProfileModal').classList.remove('hidden');
-        }
+    document.getElementById('viewProfileModal').classList.remove('hidden');
+}
 
         function updateProfileFollowCounts(targetEmail) {
             const targetKey = encodeFirebaseKey(targetEmail);
@@ -792,24 +797,24 @@
             }
         }
 
-        function toggleFollowUser() {
-            if (!currentUser) return alert('Vui lòng đăng nhập để thực hiện theo dõi!');
-            if (!currentViewingEmail || currentViewingEmail === currentUser.email) return;
+function toggleFollowUser() {
+    if (!currentUser) return alert('Vui lòng đăng nhập để thực hiện theo dõi!');
+    if (!currentViewingEmail || currentViewingEmail.toLowerCase() === currentUser.email.toLowerCase()) {
+        return alert('Bạn không thể tự theo dõi chính mình!');
+    }
 
-            const myKey = encodeFirebaseKey(currentUser.email);
-            const targetKey = encodeFirebaseKey(currentViewingEmail);
+    const myKey = encodeFirebaseKey(currentUser.email);
+    const targetKey = encodeFirebaseKey(currentViewingEmail);
 
-            const isCurrentlyFollowing = cloudFollowsData[myKey] && cloudFollowsData[myKey][targetKey];
-            const followNodeRef = window.fbRef(window.fbDb, `follows/${myKey}/${targetKey}`);
+    const isCurrentlyFollowing = cloudFollowsData[myKey] && cloudFollowsData[myKey][targetKey];
+    const followNodeRef = window.fbRef(window.fbDb, `follows/${myKey}/${targetKey}`);
 
-            if (isCurrentlyFollowing) {
-                // Bỏ theo dõi -> Xóa khỏi Firebase
-                window.fbRemove(followNodeRef);
-            } else {
-                // Theo dõi -> Lưu lên Firebase
-                window.fbSet(followNodeRef, true);
-            }
-        }
+    if (isCurrentlyFollowing) {
+        window.fbRemove(followNodeRef);
+    } else {
+        window.fbSet(followNodeRef, true);
+    }
+}
 
         function openEditProfileModal() {
             if (!currentUser) return;
@@ -839,20 +844,24 @@
             document.getElementById('editAvatarPreview').src = srcUrl;
         }
 
-        function saveUserProfile() {
-            const newName = document.getElementById('editNameInput').value.trim();
-            if (!newName) return alert('Tên không được để trống!');
+function saveUserProfile() {
+    const newName = document.getElementById('editNameInput').value.trim();
+    if (!newName) return alert('Tên không được để trống!');
 
-            currentUser.name = newName;
-            currentUser.picture = tempAvatarData;
+    currentUser.name = newName;
+    currentUser.picture = tempAvatarData;
 
-            localStorage.setItem('real_google_chat_user', JSON.stringify(currentUser));
-            syncUserProfileToCloud(currentUser);
+    // Lưu vào localStorage cục bộ
+    localStorage.setItem('real_google_chat_user', JSON.stringify(currentUser));
+    
+    // Đồng bộ trực tiếp lên Firebase Cloud
+    syncUserProfileToCloud(currentUser);
 
-            updateUserUI();
-            closeEditProfileModal();
-            renderMessages();
-        }
+    updateUserUI();
+    closeEditProfileModal();
+    renderMessages();
+    alert("Đã lưu hồ sơ thành công!");
+}
 
         function openGifModal() {
             if (!currentUser) return alert('Vui lòng đăng nhập Google để chọn GIF!');
