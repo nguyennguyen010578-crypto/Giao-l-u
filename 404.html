@@ -124,7 +124,7 @@
 
             <div class="p-4 bg-white border-t border-slate-200">
                 <div class="bg-slate-50 border border-slate-200 rounded-2xl p-3 space-y-2 focus-within:border-indigo-500 transition">
-                    <textarea id="chatInputText" onkeydown="handleKeySend(event)" placeholder="Nhập tin nhắn giao lưu... (Nhấn Enter để gửi)" rows="2" class="w-full bg-transparent text-xs text-slate-800 placeholder-slate-400 outline-none resize-none"></textarea>
+                    <textarea id="chatInputText" onkeydown="handleKeySend(event)" placeholder="Nhập tin nhắn giao lưu... (Dán link web, dùng @tên để nhắc ai đó, Nhấn Enter để gửi)" rows="2" class="w-full bg-transparent text-xs text-slate-800 placeholder-slate-400 outline-none resize-none"></textarea>
                     
                     <div class="flex items-center justify-between pt-2 border-t border-slate-200/60 text-xs">
                         <div class="flex items-center gap-3 text-slate-500">
@@ -149,7 +149,7 @@
         </div>
     </main>
 
-    <!-- MODAL XÁC THỰC KẾT HỢP KIỂM TRA CHUỘT VÀ TICK CHỌN NẰM CHÍNH GIỮA, NỀN MỜ -->
+    <!-- MODAL XÁC THỰC CHỐNG BOT NẰM CHÍNH GIỮA, NỀN MỜ -->
     <div id="captchaModal" class="fixed inset-0 z-50 bg-slate-900/70 backdrop-blur-sm flex items-center justify-center p-4 hidden">
         <div class="bg-white rounded-3xl shadow-2xl max-w-sm w-full p-6 space-y-5 border border-slate-100 text-center relative">
             <div class="w-12 h-12 bg-indigo-50 text-indigo-600 rounded-2xl mx-auto flex items-center justify-center text-xl shadow mb-1">
@@ -387,9 +387,8 @@
         let replyingTo = null;
         let visibleMessageLimit = 20;
 
-        // Biến trạng thái kết hợp: kiểm tra chuyển động chuột & tick chọn
         let mouseMoveCount = 0;
-        let isCaptchaVerified = false;
+        let isCaptchaVerified = false; 
         let pendingActionType = null; 
         let pendingDataPayload = null; 
 
@@ -444,6 +443,11 @@
         }
 
         function openCaptchaModal(actionType, payload) {
+            if (isCaptchaVerified) {
+                executePostCaptchaAction(actionType, payload);
+                return;
+            }
+
             pendingActionType = actionType;
             pendingDataPayload = payload;
             resetCustomCaptcha();
@@ -465,6 +469,7 @@
                 alert('Vui lòng tick chọn vào ô "Tôi không phải người máy" trước khi tiếp tục!');
                 return;
             }
+
             const type = pendingActionType;
             const payload = pendingDataPayload;
             closeCaptchaModal();
@@ -977,6 +982,20 @@
             });
         }
 
+        function scrollToTargetMessage() {
+            const hash = window.location.hash;
+            if (hash && hash.startsWith('#msg_')) {
+                const targetElement = document.querySelector(hash);
+                if (targetElement) {
+                    targetElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    targetElement.classList.add('bg-indigo-50', 'transition', 'duration-500');
+                    setTimeout(() => {
+                        targetElement.classList.remove('bg-indigo-50');
+                    }, 2500);
+                }
+            }
+        }
+
         function viewUserProfile(email, name, picture) {
             const basePath = window.location.pathname.replace(/\/user\/.*$/, '').replace(/\/$/, '');
             const newUrl = `${window.location.origin}${basePath}/user/${encodeURIComponent(name)}`;
@@ -1089,6 +1108,26 @@
                         'follow'
                     );
                 });
+            }
+        }
+
+        function clickTagUser(userName) {
+            let targetEmail = null;
+            let targetPicture = '';
+
+            for (let key in cloudProfilesData) {
+                const p = cloudProfilesData[key];
+                if (p.name.toLowerCase() === userName.toLowerCase()) {
+                    targetEmail = p.email;
+                    targetPicture = p.picture || '';
+                    break;
+                }
+            }
+
+            if (targetEmail) {
+                viewUserProfile(targetEmail, userName, targetPicture);
+            } else {
+                alert(`Không tìm thấy thông tin tài khoản của @${userName}`);
             }
         }
 
@@ -1328,7 +1367,7 @@
             messagesToDisplay.forEach(msg => {
                 const isMyMsg = currentUser && currentUser.email === msg.email;
                 const div = document.createElement('div');
-                div.id = "msg_box_" + msg.firebaseKey;
+                div.id = "msg_" + msg.firebaseKey; // ID gắn chuẩn để nhận diện URL hash
                 div.className = isMyMsg ? "flex items-start gap-3 flex-row-reverse justify-start group relative" : "flex items-start gap-3 justify-start group relative";
 
                 const userKey = encodeFirebaseKey(msg.email || '');
@@ -1347,9 +1386,12 @@
 
                 let bodyContent = '';
                 if(msg.type === 'text') {
+                    let formattedContent = msg.content.replace(/(https?:\/\/[^\s]+)/g, '<a href="$1" target="_blank" class="underline font-medium hover:opacity-80">$1</a>');
+                    formattedContent = formattedContent.replace(/@([a-zA-Z0-9_\u00C0-\u1EF9]+)/g, '<span onclick="clickTagUser(\'$1\')" class="font-bold hover:underline cursor-pointer">@$1</span>');
+
                     bodyContent = isMyMsg 
-                        ? `<div class="mt-1 bg-emerald-600 text-white border border-emerald-500 rounded-2xl rounded-tr-none px-4 py-2.5 text-xs shadow-sm inline-block text-left">${replyHtml}${msg.content}</div>`
-                        : `<div class="mt-1 bg-white border border-slate-200 rounded-2xl rounded-tl-none px-4 py-2.5 text-xs text-slate-700 shadow-sm inline-block text-left">${replyHtml}${msg.content}</div>`;
+                        ? `<div class="mt-1 bg-emerald-600 text-white border border-emerald-500 rounded-2xl rounded-tr-none px-4 py-2.5 text-xs shadow-sm inline-block text-left break-all">${replyHtml}${formattedContent}</div>`
+                        : `<div class="mt-1 bg-white border border-slate-200 rounded-2xl rounded-tl-none px-4 py-2.5 text-xs text-slate-700 shadow-sm inline-block text-left break-all">${replyHtml}${formattedContent}</div>`;
                 } else if(msg.type === 'image') {
                     bodyContent = `<div class="mt-1">${replyHtml}<img src="${msg.content}" class="max-w-[280px] rounded-2xl border shadow-sm"></div>`;
                 } else if(msg.type === 'gif') {
@@ -1387,6 +1429,9 @@
             if (!preserveScroll) {
                 container.scrollTop = container.scrollHeight;
             }
+
+            // Tự động cuộn đến tin nhắn nếu URL có chứa #msg_...
+            setTimeout(scrollToTargetMessage, 300);
         }
     </script>
 </body>
