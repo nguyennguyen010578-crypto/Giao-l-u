@@ -797,24 +797,24 @@ function openProfileModalRaw(email, name, picture) {
             }
         }
 
-        function toggleFollowUser() {
-            if (!currentUser) return alert('Vui lòng đăng nhập để thực hiện theo dõi!');
-            if (!currentViewingEmail || currentViewingEmail === currentUser.email) return;
+function toggleFollowUser() {
+    if (!currentUser) return alert('Vui lòng đăng nhập để thực hiện theo dõi!');
+    if (!currentViewingEmail || currentViewingEmail.toLowerCase() === currentUser.email.toLowerCase()) {
+        return alert('Bạn không thể tự theo dõi chính mình!');
+    }
 
-            const myKey = encodeFirebaseKey(currentUser.email);
-            const targetKey = encodeFirebaseKey(currentViewingEmail);
+    const myKey = encodeFirebaseKey(currentUser.email);
+    const targetKey = encodeFirebaseKey(currentViewingEmail);
 
-            const isCurrentlyFollowing = cloudFollowsData[myKey] && cloudFollowsData[myKey][targetKey];
-            const followNodeRef = window.fbRef(window.fbDb, `follows/${myKey}/${targetKey}`);
+    const isCurrentlyFollowing = cloudFollowsData[myKey] && cloudFollowsData[myKey][targetKey];
+    const followNodeRef = window.fbRef(window.fbDb, `follows/${myKey}/${targetKey}`);
 
-            if (isCurrentlyFollowing) {
-                // Bỏ theo dõi -> Xóa khỏi Firebase
-                window.fbRemove(followNodeRef);
-            } else {
-                // Theo dõi -> Lưu lên Firebase
-                window.fbSet(followNodeRef, true);
-            }
-        }
+    if (isCurrentlyFollowing) {
+        window.fbRemove(followNodeRef);
+    } else {
+        window.fbSet(followNodeRef, true);
+    }
+}
 
         function openEditProfileModal() {
             if (!currentUser) return;
