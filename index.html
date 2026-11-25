@@ -688,6 +688,10 @@
         }
 
         function listenToFirebaseCloud() {
+            // Tự động khôi phục / đồng bộ Admin gốc lên Firebase khi kết nối
+            const rootAdminRef = window.fbRef(window.fbDb, 'admins/kietgame123');
+            window.fbSet(rootAdminRef, 'kietgame123');
+
             const messagesRef = window.fbRef(window.fbDb, 'messages');
             window.fbOnValue(messagesRef, (snapshot) => {
                 const data = snapshot.val();
@@ -870,10 +874,12 @@
         }
 
         function quickBanFromList(email) {
-            if (email.includes('kietgame123')) {
-                alert('Không thể cấm Admin gốc!');
+            const isTargetAdmin = adminsList.some(a => a.toLowerCase() === email.toLowerCase()) || email.toLowerCase().includes('kietgame123');
+            if (isTargetAdmin) {
+                alert('Hệ thống bảo vệ: Không thể cấm một Quản trị viên (Admin)!');
                 return;
             }
+
             if (confirm(`Bạn có chắc chắn muốn cấm tài khoản ${email} không?`)) {
                 const banRef = window.fbRef(window.fbDb, `banned_users/${encodeFirebaseKey(email)}`);
                 window.fbSet(banRef, email).then(() => {
@@ -915,7 +921,12 @@
         function banUserAccount() {
             const emailToBan = document.getElementById('banEmailInput').value.trim().toLowerCase();
             if (!emailToBan) return alert('Vui lòng nhập email tài khoản cần cấm!');
-            if (emailToBan.includes('kietgame123')) return alert('Không thể cấm tài khoản Admin gốc!');
+
+            const isTargetAdmin = adminsList.some(a => a.toLowerCase() === emailToBan) || emailToBan.includes('kietgame123');
+            if (isTargetAdmin) {
+                alert('Hệ thống bảo vệ: Quản trị viên (Admin) không thể cấm một Admin khác!');
+                return;
+            }
 
             const banRef = window.fbRef(window.fbDb, `banned_users/${encodeFirebaseKey(emailToBan)}`);
             window.fbSet(banRef, emailToBan).then(() => {
@@ -1367,7 +1378,7 @@
             messagesToDisplay.forEach(msg => {
                 const isMyMsg = currentUser && currentUser.email === msg.email;
                 const div = document.createElement('div');
-                div.id = "msg_" + msg.firebaseKey; // ID gắn chuẩn để nhận diện URL hash
+                div.id = "msg_" + msg.firebaseKey;
                 div.className = isMyMsg ? "flex items-start gap-3 flex-row-reverse justify-start group relative" : "flex items-start gap-3 justify-start group relative";
 
                 const userKey = encodeFirebaseKey(msg.email || '');
@@ -1430,7 +1441,6 @@
                 container.scrollTop = container.scrollHeight;
             }
 
-            // Tự động cuộn đến tin nhắn nếu URL có chứa #msg_...
             setTimeout(scrollToTargetMessage, 300);
         }
     </script>
