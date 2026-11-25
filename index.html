@@ -588,7 +588,6 @@
 
         window.onload = initApp;
 
-        // Đăng ký tài khoản Khách với tên tự động tăng dần (Khách 1, Khách 2,...)
         function loginAsGuestUser() {
             let guestCounter = parseInt(localStorage.getItem('chat_guest_counter') || '0') + 1;
             localStorage.setItem('chat_guest_counter', guestCounter);
@@ -634,7 +633,6 @@
             if (energyEl) energyEl.innerText = userEnergy;
         }
 
-        // Chỉ Admin mới được cộng xu AT
         function addEnergy(amount) {
             if (!currentUser || !window.fbDb) return;
             
@@ -730,7 +728,6 @@
             }).join('');
         }
 
-        // Điểm danh hằng ngày chỉ dành cho Admin
         function claimDailyAttendance() {
             if (!currentUser || !window.fbDb) return;
 
