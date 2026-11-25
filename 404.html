@@ -149,7 +149,7 @@
         </div>
     </main>
 
-    <!-- MODAL XÁC THỰC CHỐNG BOT NẰM CHÍNH GIỮA, NỀN MỜ -->
+    <!-- MODAL XÁC THỰC KẾT HỢP KIỂM TRA CHUỘT VÀ TICK CHỌN NẰM CHÍNH GIỮA, NỀN MỜ -->
     <div id="captchaModal" class="fixed inset-0 z-50 bg-slate-900/70 backdrop-blur-sm flex items-center justify-center p-4 hidden">
         <div class="bg-white rounded-3xl shadow-2xl max-w-sm w-full p-6 space-y-5 border border-slate-100 text-center relative">
             <div class="w-12 h-12 bg-indigo-50 text-indigo-600 rounded-2xl mx-auto flex items-center justify-center text-xl shadow mb-1">
@@ -157,7 +157,7 @@
             </div>
             <div class="space-y-1">
                 <h3 class="font-bold text-base text-slate-800">Xác thực chống Bot</h3>
-                <p class="text-xs text-slate-500">Hệ thống phân tích chuyển động chuột để bảo vệ cộng đồng</p>
+                <p class="text-xs text-slate-500">Di chuyển chuột và tick chọn để xác nhận</p>
             </div>
 
             <div class="bg-slate-50 border border-slate-200 rounded-2xl p-4 flex items-center justify-between gap-3 shadow-inner">
@@ -167,7 +167,7 @@
                     </div>
                     <div>
                         <p class="font-bold text-xs text-slate-700">Tôi không phải người máy</p>
-                        <p id="customCaptchaStatus" class="text-[10px] text-slate-400">Di chuyển chuột và bấm vào ô</p>
+                        <p id="customCaptchaStatus" class="text-[10px] text-slate-400">Bấm vào ô để xác nhận</p>
                     </div>
                 </div>
             </div>
@@ -387,11 +387,11 @@
         let replyingTo = null;
         let visibleMessageLimit = 20;
 
-        // Biến trạng thái Captcha tự chế theo dõi chuyển động chuột
+        // Biến trạng thái kết hợp: kiểm tra chuyển động chuột & tick chọn
         let mouseMoveCount = 0;
         let isCaptchaVerified = false;
-        let pendingActionType = null; // Lưu loại hành động chờ xác thực ('text', 'image', 'gif')
-        let pendingDataPayload = null; // Lưu nội dung chờ gửi
+        let pendingActionType = null; 
+        let pendingDataPayload = null; 
 
         window.addEventListener('mousemove', () => {
             if (!isCaptchaVerified) {
@@ -399,8 +399,8 @@
                 if (mouseMoveCount > 15) {
                     const scoreEl = document.getElementById('mouseScoreText');
                     if (scoreEl) {
-                        scoreEl.innerText = "Đã ghi nhận hành vi chuyển động hợp lệ";
-                        scoreEl.className = "text-[10px] bg-emerald-100 text-emerald-700 px-3 py-1.5 rounded-full font-bold block";
+                        scoreEl.innerText = "Đã ghi nhận chuyển động chuột hợp lệ";
+                        scoreEl.className = "text-[10px] bg-indigo-50 text-indigo-700 px-3 py-1.5 rounded-full font-bold block";
                     }
                 }
             }
@@ -408,7 +408,7 @@
 
         function verifyCustomCaptcha() {
             if (mouseMoveCount < 10) {
-                alert('Vui lòng di chuyển chuột thêm một chút trên màn hình trước khi xác nhận!');
+                alert('Vui lòng di chuyển chuột xung quanh màn hình trước khi tick chọn!');
                 return;
             }
             isCaptchaVerified = true;
@@ -421,8 +421,8 @@
             check.classList.remove('hidden');
             status.innerText = "Xác thực thành công!";
             status.className = "text-[10px] text-emerald-600 font-bold";
-            scoreText.innerText = "Đã xác nhận bạn là con người ✓";
-            scoreText.className = "text-[10px] bg-emerald-500 text-white px-3 py-1.5 rounded-full font-bold block";
+            scoreText.innerText = "Xác nhận thành công bạn là con người ✓";
+            scoreText.className = "text-[10px] bg-emerald-100 text-emerald-700 px-3 py-1.5 rounded-full font-bold block";
         }
 
         function resetCustomCaptcha() {
@@ -436,7 +436,7 @@
             if(box && check && status && scoreText) {
                 box.className = "w-8 h-8 rounded-xl border-2 border-slate-300 bg-white flex items-center justify-center cursor-pointer transition select-none hover:border-indigo-500 shadow-sm shrink-0";
                 check.classList.add('hidden');
-                status.innerText = "Di chuyển chuột và bấm vào ô";
+                status.innerText = "Bấm vào ô để xác nhận";
                 status.className = "text-[10px] text-slate-400";
                 scoreText.innerText = "Đang phân tích hành vi chuột...";
                 scoreText.className = "text-[10px] bg-slate-100 text-slate-600 px-3 py-1.5 rounded-full font-bold block";
@@ -444,11 +444,6 @@
         }
 
         function openCaptchaModal(actionType, payload) {
-            if (isCaptchaVerified) {
-                // Nếu đã xác thực trước đó rồi thì thực hiện luôn
-                executePostCaptchaAction(actionType, payload);
-                return;
-            }
             pendingActionType = actionType;
             pendingDataPayload = payload;
             resetCustomCaptcha();
@@ -462,8 +457,12 @@
         }
 
         function confirmCaptchaAndSend() {
+            if (mouseMoveCount < 10) {
+                alert('Vui lòng di chuyển chuột thêm một chút trên màn hình!');
+                return;
+            }
             if (!isCaptchaVerified) {
-                alert('Vui lòng hoàn thành xác thực chống Bot trước khi tiếp tục!');
+                alert('Vui lòng tick chọn vào ô "Tôi không phải người máy" trước khi tiếp tục!');
                 return;
             }
             const type = pendingActionType;
