@@ -150,14 +150,14 @@
     </main>
 
     <!-- MODAL XÁC THỰC CHỐNG BOT NẰM CHÍNH GIỮA, NỀN MỜ -->
-    <div id="captchaModal" class="fixed inset-0 z-50 bg-slate-900/70 backdrop-blur-sm flex items-center justify-center p-4 hidden">
+    <div id="captchaModal" class="fixed inset-0 z-50 bg-slate-900/80 backdrop-blur-md flex items-center justify-center p-4 hidden">
         <div class="bg-white rounded-3xl shadow-2xl max-w-sm w-full p-6 space-y-5 border border-slate-100 text-center relative">
             <div class="w-12 h-12 bg-indigo-50 text-indigo-600 rounded-2xl mx-auto flex items-center justify-center text-xl shadow mb-1">
                 <i class="fas fa-shield-alt"></i>
             </div>
             <div class="space-y-1">
                 <h3 class="font-bold text-base text-slate-800">Xác thực chống Bot</h3>
-                <p class="text-xs text-slate-500">Di chuyển chuột và tick chọn để xác nhận</p>
+                <p class="text-xs text-slate-500">Di chuyển chuột và tick chọn để tiếp tục vào phòng chat</p>
             </div>
 
             <div class="bg-slate-50 border border-slate-200 rounded-2xl p-4 flex items-center justify-between gap-3 shadow-inner">
@@ -176,9 +176,8 @@
                 <span id="mouseScoreText" class="text-[10px] bg-slate-100 text-slate-600 px-3 py-1.5 rounded-full font-bold block">Đang phân tích hành vi chuột...</span>
             </div>
 
-            <div class="flex items-center justify-end gap-2 pt-3 border-t">
-                <button onclick="closeCaptchaModal()" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-xl font-bold text-xs">Hủy</button>
-                <button onclick="confirmCaptchaAndSend()" class="px-5 py-2 bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl font-bold text-xs shadow">Xác nhận gửi</button>
+            <div class="flex items-center justify-center pt-3 border-t">
+                <button onclick="confirmCaptchaAndSend()" class="w-full py-2.5 bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl font-bold text-xs shadow transition">Xác nhận vào phòng chat</button>
             </div>
         </div>
     </div>
@@ -442,6 +441,14 @@
             }
         }
 
+        function openInitialCaptchaModal() {
+            if (isCaptchaVerified) return;
+            pendingActionType = 'entry';
+            pendingDataPayload = null;
+            resetCustomCaptcha();
+            document.getElementById('captchaModal').classList.remove('hidden');
+        }
+
         function openCaptchaModal(actionType, payload) {
             if (isCaptchaVerified) {
                 executePostCaptchaAction(actionType, payload);
@@ -473,7 +480,7 @@
             const type = pendingActionType;
             const payload = pendingDataPayload;
             closeCaptchaModal();
-            if (type) {
+            if (type && type !== 'entry') {
                 executePostCaptchaAction(type, payload);
             }
         }
@@ -497,6 +504,7 @@
                     currentUser = JSON.parse(savedUser);
                     document.getElementById('loginModal').classList.add('hidden');
                     updateUserUI();
+                    openInitialCaptchaModal(); // Xác minh ngay khi vừa vào trang
                 } else {
                     document.getElementById('loginModal').classList.remove('hidden');
                 }
@@ -807,6 +815,7 @@
                 syncUserProfileToCloud(currentUser);
                 listenToUserNotifications(currentUser.email);
                 renderMessages();
+                openInitialCaptchaModal(); // Xác minh ngay sau khi đăng nhập
             } catch (error) {
                 alert('Lỗi xác thực tài khoản Google!');
             }
@@ -815,6 +824,7 @@
         function handleLogout() {
             localStorage.removeItem('real_google_chat_user');
             currentUser = null;
+            isCaptchaVerified = false;
             document.getElementById('loginModal').classList.remove('hidden');
             document.getElementById('adminSettingBtn').classList.add('hidden');
             document.getElementById('notificationWrapper').classList.add('hidden');
@@ -917,7 +927,6 @@
 
             const adminRef = window.fbRef(window.fbDb, `admins/${encodeFirebaseKey(val)}`);
             window.fbSet(adminRef, val).then(() => {
-                // Tự động gỡ cấm nếu tài khoản mới được bổ nhiệm từng bị cấm trước đó
                 const unbanRef = window.fbRef(window.fbDb, `banned_users/${encodeFirebaseKey(val)}`);
                 window.fbRemove(unbanRef);
 
@@ -1279,7 +1288,6 @@
                     pushNotificationToUser(replyTarget.email, 'Phản hồi mới', `${currentUser.name} đã trả lời tin nhắn của bạn bằng một GIF.`, 'reply');
                 }
                 cancelReply();
-                resetCustomCaptcha();
             });
         }
 
@@ -1320,7 +1328,6 @@
                 }
                 input.value = '';
                 cancelReply();
-                resetCustomCaptcha();
             }).catch(() => {
                 alert('Không thể gửi tin nhắn. Hãy kiểm tra kết nối Firebase!');
             });
@@ -1360,7 +1367,6 @@
                     pushNotificationToUser(replyTarget.email, 'Phản hồi mới', `${currentUser.name} đã trả lời tin nhắn của bạn bằng một hình ảnh.`, 'reply');
                 }
                 cancelReply();
-                resetCustomCaptcha();
             });
         }
 
