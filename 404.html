@@ -588,17 +588,20 @@
 
         window.onload = initApp;
 
-        // Đăng ký tài khoản Khách với tên tự động tăng dần (Khách 1, Khách 2,...)
+        // Đăng ký tài khoản Khách với tên tự động tăng dần và đồng bộ Firebase
         function loginAsGuestUser() {
             let guestCounter = parseInt(localStorage.getItem('chat_guest_counter') || '0') + 1;
             localStorage.setItem('chat_guest_counter', guestCounter);
 
+            const guestId = `guest_${guestCounter}`;
             const guestName = `Khách ${guestCounter}`;
+            const guestEmail = `${guestId}@noemail.com`;
+            const guestPicture = `https://api.dicebear.com/7.x/bottts/svg?seed=Guest${guestCounter}`;
 
             currentUser = {
                 name: guestName,
-                email: `guest_${guestCounter}@noemail.com`,
-                picture: `https://api.dicebear.com/7.x/bottts/svg?seed=Guest${guestCounter}`,
+                email: guestEmail,
+                picture: guestPicture,
                 isGuest: true
             };
 
@@ -608,6 +611,17 @@
             
             userEnergy = 0;
             updateEnergyUI();
+
+            if (window.fbDb) {
+                const userKey = encodeFirebaseKey(guestEmail);
+                const profileRef = window.fbRef(window.fbDb, `user_profiles/${userKey}`);
+                window.fbSet(profileRef, {
+                    name: guestName,
+                    picture: guestPicture,
+                    email: guestEmail,
+                    isGuest: true
+                });
+            }
 
             renderMessages();
             openInitialCaptchaModal();
@@ -634,7 +648,6 @@
             if (energyEl) energyEl.innerText = userEnergy;
         }
 
-        // Chỉ Admin mới được cộng xu AT
         function addEnergy(amount) {
             if (!currentUser || !window.fbDb) return;
             
@@ -730,7 +743,6 @@
             }).join('');
         }
 
-        // Điểm danh hằng ngày chỉ dành cho Admin
         function claimDailyAttendance() {
             if (!currentUser || !window.fbDb) return;
 
@@ -773,7 +785,8 @@
             window.fbSet(profileRef, {
                 name: user.name,
                 picture: user.picture || '',
-                email: user.email
+                email: user.email,
+                isGuest: !!user.isGuest
             });
         }
 
@@ -1128,7 +1141,7 @@
                         <div class="flex items-center gap-2 overflow-hidden cursor-pointer hover:opacity-80" onclick="viewUserProfile('${u.email}', '${safeName}', '${u.picture || ''}')">
                             <img src="${u.picture || 'https://api.dicebear.com/7.x/bottts/svg?seed=' + u.name}" class="w-7 h-7 rounded-full object-cover border shrink-0">
                             <div class="truncate">
-                                <p class="font-bold text-xs text-slate-800 truncate">${u.name} ${isAdmin ? '<span class="text-[10px] bg-purple-100 text-purple-700 px-1.5 py-0.5 rounded font-bold">Admin</span>' : ''}</p>
+                                <p class="font-bold text-xs text-slate-800 truncate">${u.name} ${u.isGuest ? '<span class="text-[10px] bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded font-bold">Khách</span>' : ''} ${isAdmin ? '<span class="text-[10px] bg-purple-100 text-purple-700 px-1.5 py-0.5 rounded font-bold">Admin</span>' : ''}</p>
                                 <p class="text-[10px] text-slate-400 truncate">${u.email}</p>
                             </div>
                         </div>
