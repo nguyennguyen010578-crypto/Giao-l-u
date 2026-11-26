@@ -106,8 +106,22 @@
         </div>
     </header>
 
-    <!-- MAIN CHAT CONTAINER -->
-    <main class="flex-1 p-4 max-w-4xl mx-auto w-full flex flex-col overflow-hidden" onclick="closeNotificationDropdown()">
+    <!-- MAIN CONTAINER CHIA 2 CỘT -->
+    <main class="flex-1 p-4 max-w-6xl mx-auto w-full flex gap-4 overflow-hidden" onclick="closeNotificationDropdown()">
+        
+        <!-- THANH BÊN TRÁI: HIỆN/ẨN THÀNH VIÊN TRỰC TUYẾN -->
+        <aside id="onlineSidebar" class="hidden w-64 bg-white rounded-2xl shadow-sm border border-slate-200 flex flex-col overflow-hidden shrink-0">
+            <div class="px-4 py-3 border-b border-slate-100 bg-slate-50 flex items-center justify-between">
+                <span class="font-bold text-xs text-slate-800 flex items-center gap-1.5">
+                    <i class="fas fa-signal text-emerald-500 animate-pulse"></i> Trực tuyến (<span id="onlineCountBadge">0</span>)
+                </span>
+            </div>
+            <div id="onlineMembersList" class="flex-1 p-3 overflow-y-auto space-y-2 text-xs">
+                <!-- Danh sách online render bằng JS -->
+            </div>
+        </aside>
+
+        <!-- KHUNG CHAT CHÍNH -->
         <div class="bg-white rounded-2xl shadow-sm border border-slate-200 flex flex-col flex-1 overflow-hidden">
             
             <div class="px-6 py-3 border-b border-slate-100 flex items-center justify-between bg-white">
@@ -145,11 +159,8 @@
                             <button onclick="triggerImageUpload()" class="hover:text-indigo-600 flex items-center gap-1 font-medium" title="Đính kèm ảnh">
                                 <i class="far fa-image text-emerald-500 text-base"></i> Đính kèm ảnh
                             </button>
-                            <button onclick="openGifModal()" class="hover:text-indigo-600 flex items-center gap-1 font-medium text-purple-600" title="Chọn GIF Klipy">
-                                <i class="fas fa-film text-base"></i> Kho GIF Klipy
-                            </button>
-                            <button onclick="triggerCustomGifUpload()" class="hover:text-indigo-600 flex items-center gap-1 font-medium text-amber-600" title="Tải GIF tự chế từ máy">
-                                <i class="fas fa-upload text-base"></i> Tải GIF tự chế
+                            <button onclick="openGifModal()" class="hover:text-indigo-600 flex items-center gap-1 font-medium text-purple-600" title="Kho GIF & Tạo GIF mới">
+                                <i class="fas fa-film text-base"></i> Kho GIF & Tạo GIF
                             </button>
                         </div>
 
@@ -222,7 +233,6 @@
     </div>
 
     <input type="file" id="chatImageInput" accept="image/*" class="hidden" onchange="handleChatImage(event)">
-    <input type="file" id="customGifInput" accept="image/gif" class="hidden" onchange="handleCustomGifFile(event)">
     <input type="file" id="avatarFileInput" accept="image/*" class="hidden" onchange="handleAvatarFileSelect(event)">
 
     <!-- GOOGLE AUTHENTICATION MODAL -->
@@ -309,21 +319,33 @@
         </div>
     </div>
 
-    <!-- MODAL TÌM KIẾM GIF KLIPY -->
+    <!-- MODAL KHO GIF VÀ TẠO GIF -->
     <div id="gifModal" class="fixed inset-0 z-50 bg-slate-900/70 backdrop-blur-sm flex items-center justify-center p-4 hidden">
-        <div class="bg-white rounded-3xl shadow-2xl max-w-md w-full p-6 space-y-4 border border-slate-100 relative">
+        <div class="bg-white rounded-3xl shadow-2xl max-w-lg w-full p-6 space-y-4 border border-slate-100 relative">
             <div class="flex items-center justify-between border-b pb-3">
                 <h3 class="font-bold text-base text-slate-800 flex items-center gap-2">
-                    <i class="fas fa-film text-purple-600"></i> Tìm kiếm GIF (Klipy)
+                    <i class="fas fa-film text-purple-600"></i> Kho GIF Cộng Đồng & Tạo GIF Mới
                 </h3>
                 <button onclick="closeGifModal()" class="text-slate-400 hover:text-slate-600"><i class="fas fa-times text-lg"></i></button>
             </div>
+
+            <!-- PHẦN TẠO GIF TỰ CHẾ VÀ LƯU VÀO KHO CHUNG -->
+            <div class="bg-purple-50/60 p-3.5 rounded-2xl border border-purple-200 space-y-2">
+                <label class="block text-xs font-bold text-purple-900"><i class="fas fa-magic text-purple-600"></i> Tự chế & Thêm GIF động vào kho chung:</label>
+                <div class="flex gap-2">
+                    <input type="text" id="customGifPromptInput" placeholder="Nhập từ khóa (vd: vỗ tay, mèo vui, trái tim)..." class="w-full px-3 py-2 border border-purple-200 rounded-xl text-xs outline-none focus:border-purple-500 bg-white">
+                    <button onclick="createAndSaveCustomGif()" class="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-xl text-xs font-bold shadow shrink-0">Tạo & Lưu kho</button>
+                </div>
+            </div>
+
+            <!-- TÌM KIẾM GIF TRONG KHO -->
             <div class="flex items-center gap-2 bg-slate-100 px-3 py-2 rounded-xl border border-slate-200">
                 <i class="fas fa-search text-slate-400 text-xs"></i>
-                <input type="text" id="gifSearchInput" onkeyup="searchKlipyGifs(this.value)" placeholder="Nhập từ khóa tìm kiếm GIF..." class="w-full bg-transparent text-xs outline-none">
+                <input type="text" id="gifSearchInput" onkeyup="filterLocalGifs(this.value)" placeholder="Tìm kiếm GIF trong kho..." class="w-full bg-transparent text-xs outline-none">
             </div>
-            <div id="gifGrid" class="grid grid-cols-2 gap-3 max-h-80 overflow-y-auto p-1">
-                <p class="col-span-2 text-center text-xs text-slate-400 py-6">Đang tải GIF từ Klipy...</p>
+
+            <div id="gifGrid" class="grid grid-cols-2 gap-3 max-h-64 overflow-y-auto p-1">
+                <!-- Render bằng JS -->
             </div>
         </div>
     </div>
@@ -432,6 +454,7 @@
         let bannedUsersMap = {};
         let cloudFollowsData = {};
         let cloudProfilesData = {};
+        let cloudCustomGifs = {};
         let userNotifications = [];
         let tempAvatarData = null;
         let currentViewingEmail = null;
@@ -548,10 +571,26 @@
             if (type === 'gif') performSendGifMessage(payload);
         }
 
-        const klipyAppKey = "bk7DCC4zykHHo6BsHvx7EYpCVF3ZcljTcbIe9HtA0OJZEdIec6ZI4fqQrvo9zPK0";
-
         function encodeFirebaseKey(str) {
             return str.toLowerCase().replace(/\./g, '_dot_').replace(/@/g, '_at_').replace(/[#$\[\]\/]/g, '_');
+        }
+
+        // ĐỒNG BỘ TRẠNG THÁI TRỰC TUYẾN LIÊN TỤC CHO MỌI TÀI KHOẢN (KỂ CẢ KHÁCH)
+        setInterval(() => {
+            updateMyPresence();
+        }, 20000);
+
+        function updateMyPresence() {
+            if (currentUser && currentUser.email && window.fbDb) {
+                const userKey = encodeFirebaseKey(currentUser.email);
+                const presenceRef = window.fbRef(window.fbDb, `online_presence/${userKey}`);
+                window.fbSet(presenceRef, {
+                    name: currentUser.name,
+                    picture: currentUser.picture || '',
+                    email: currentUser.email,
+                    lastActive: Date.now()
+                });
+            }
         }
 
         function initApp() {
@@ -561,6 +600,7 @@
                     currentUser = JSON.parse(savedUser);
                     document.getElementById('loginModal').classList.add('hidden');
                     updateUserUI();
+                    updateMyPresence();
                     openInitialCaptchaModal(); 
                 } else {
                     document.getElementById('loginModal').classList.remove('hidden');
@@ -576,6 +616,7 @@
                         listenToUserNotifications(currentUser.email);
                         loadUserEnergy(currentUser.email);
                         loadUserAttendance(currentUser.email);
+                        updateMyPresence();
                     }
                     checkUrlRouting();
                 }
@@ -622,6 +663,7 @@
                 });
             }
 
+            updateMyPresence();
             renderMessages();
             openInitialCaptchaModal();
             openEditProfileModal();
@@ -780,6 +822,7 @@
                 email: user.email,
                 isGuest: !!user.isGuest
             });
+            updateMyPresence();
         }
 
         function pushNotificationToUser(targetEmail, title, message, type = 'info') {
@@ -976,8 +1019,6 @@
                     messages.sort((a, b) => a.id - b.id);
                 }
                 renderMessages();
-            }, () => {
-                document.getElementById('chatMessagesContainer').innerHTML = `<div class="text-center text-xs text-red-500 py-6">Lỗi kết nối Firebase.</div>`;
             });
 
             const profilesRef = window.fbRef(window.fbDb, 'user_profiles');
@@ -1022,6 +1063,69 @@
                     handleLogout();
                 }
             });
+
+            const customGifsRef = window.fbRef(window.fbDb, 'custom_gifs');
+            window.fbOnValue(customGifsRef, (snapshot) => {
+                cloudCustomGifs = snapshot.val() || {};
+                if (!document.getElementById('gifModal').classList.contains('hidden')) {
+                    filterLocalGifs('');
+                }
+            });
+
+            // LẮNG NGHE DANH SÁCH ONLINE TRÊN FIREBASE
+            const presenceRef = window.fbRef(window.fbDb, 'online_presence');
+            window.fbOnValue(presenceRef, (snapshot) => {
+                const data = snapshot.val() || {};
+                renderOnlineSidebar(data);
+            });
+        }
+
+        function renderOnlineSidebar(presenceData) {
+            const sidebar = document.getElementById('onlineSidebar');
+            const container = document.getElementById('onlineMembersList');
+            const badge = document.getElementById('onlineCountBadge');
+            if (!sidebar || !container || !badge) return;
+
+            const now = Date.now();
+            const activeThreshold = 3 * 60 * 1000; // Hoạt động trong vòng 3 phút
+            let onlineUsers = [];
+
+            Object.keys(presenceData).forEach(key => {
+                const u = presenceData[key];
+                if (now - u.lastActive < activeThreshold) {
+                    onlineUsers.push(u);
+                }
+            });
+
+            badge.innerText = onlineUsers.length;
+
+            if (onlineUsers.length === 0) {
+                sidebar.classList.add('hidden');
+                container.innerHTML = '';
+                return;
+            }
+
+            sidebar.classList.remove('hidden');
+
+            container.innerHTML = onlineUsers.map(u => {
+                const safeName = (u.name || '').replace(/'/g, "\\'");
+                const isMe = currentUser && currentUser.email === u.email;
+
+                return `
+                    <div onclick="viewUserProfile('${u.email}', '${safeName}', '${u.picture || ''}')" class="p-2 hover:bg-slate-50 rounded-xl cursor-pointer transition flex items-center justify-between gap-2 border border-slate-100 shadow-xs">
+                        <div class="flex items-center gap-2 overflow-hidden">
+                            <div class="relative shrink-0">
+                                <img src="${u.picture || 'https://api.dicebear.com/7.x/bottts/svg?seed=' + u.name}" class="w-7 h-7 rounded-full object-cover border">
+                                <span class="absolute bottom-0 right-0 w-2 h-2 bg-emerald-500 border-2 border-white rounded-full"></span>
+                            </div>
+                            <div class="truncate">
+                                <p class="font-bold text-xs text-slate-800 truncate">${u.name} ${isMe ? '<span class="text-[9px] text-indigo-600 font-semibold">(Bạn)</span>' : ''}</p>
+                                <p class="text-[9px] text-emerald-600 font-medium">Đang trực tuyến</p>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
         }
 
         function handleGoogleCredentialResponse(response) {
@@ -1035,7 +1139,7 @@
                 const googleUser = JSON.parse(jsonPayload);
 
                 if (!checkIsAdmin(googleUser.email, googleUser.name) && bannedUsersMap[encodeFirebaseKey(googleUser.email)]) {
-                    alert('Tài khoản này đã bị quản trị viên cấm! Vui lòng đăng nhập bằng tài khoản khác.');
+                    alert('Tài khoản này đã bị quản trị viên cấm!');
                     return;
                 }
 
@@ -1056,6 +1160,7 @@
                 listenToUserNotifications(currentUser.email);
                 loadUserEnergy(currentUser.email);
                 loadUserAttendance(currentUser.email);
+                updateMyPresence();
                 renderMessages();
                 openInitialCaptchaModal(); 
             } catch (error) {
@@ -1150,20 +1255,14 @@
 
         function quickBanFromList(email) {
             if (isAccountProtectedAdmin(email)) {
-                alert('Hệ thống bảo vệ: Admin không thể cấm một Admin khác!');
+                alert('Admin không thể cấm một Admin khác!');
                 return;
             }
 
             if (confirm(`Bạn có chắc chắn muốn cấm tài khoản ${email} không?`)) {
                 const banRef = window.fbRef(window.fbDb, `banned_users/${encodeFirebaseKey(email)}`);
                 window.fbSet(banRef, email).then(() => {
-                    pushNotificationToUser(
-                        email, 
-                        'Thông báo khóa tài khoản', 
-                        'Tài khoản của bạn đã bị quản trị viên cấm truy cập khỏi hệ thống giao lưu cộng đồng do vi phạm nội quy.', 
-                        'admin'
-                    );
-
+                    pushNotificationToUser(email, 'Thông báo khóa tài khoản', 'Tài khoản của bạn đã bị quản trị viên cấm truy cập.', 'admin');
                     alert(`Đã cấm thành công ${email}!`);
                     renderAllUsersList();
                 });
@@ -1184,28 +1283,20 @@
             }
 
             if (!matchedProfile) {
-                alert('Không có tài khoản này trên hệ thống! (Người dùng cần đăng nhập ít nhất 1 lần)');
+                alert('Không có tài khoản này trên hệ thống!');
                 return;
             }
 
             const targetEmail = matchedProfile.email.toLowerCase();
             const targetKey = encodeFirebaseKey(targetEmail);
             if (bannedUsersMap[targetKey]) {
-                alert(`Tài khoản ${matchedProfile.name} (${targetEmail}) hiện đang bị cấm (Ban), không thể bổ nhiệm làm Admin!`);
-                return;
-            }
-
-            if (checkIsAdmin(targetEmail, matchedProfile.name)) {
-                alert(`Tài khoản ${matchedProfile.name} đã là Admin rồi!`);
+                alert('Tài khoản này đang bị cấm!');
                 return;
             }
 
             const adminRef = window.fbRef(window.fbDb, `admins/${targetKey}`);
             window.fbSet(adminRef, targetEmail).then(() => {
-                const unbanRef = window.fbRef(window.fbDb, `banned_users/${targetKey}`);
-                window.fbRemove(unbanRef);
-
-                alert(`Đã cấp quyền Admin thành công cho ${matchedProfile.name} (${targetEmail})!`);
+                alert(`Đã cấp quyền Admin thành công cho ${matchedProfile.name}!`);
                 document.getElementById('newAdminInput').value = '';
                 renderAllUsersList();
             });
@@ -1242,26 +1333,19 @@
             }
 
             if (!matchedProfile) {
-                alert('Không có tài khoản này trên hệ thống! Vui lòng kiểm tra lại email hoặc tên hiển thị.');
+                alert('Không tìm thấy tài khoản!');
                 return;
             }
 
             const emailToBan = matchedProfile.email.toLowerCase();
             if (isAccountProtectedAdmin(emailToBan)) {
-                alert('Hệ thống bảo vệ: Admin không thể cấm một Admin khác!');
+                alert('Không thể cấm Admin!');
                 return;
             }
 
             const banRef = window.fbRef(window.fbDb, `banned_users/${encodeFirebaseKey(emailToBan)}`);
             window.fbSet(banRef, emailToBan).then(() => {
-                pushNotificationToUser(
-                    emailToBan, 
-                    'Thông báo khóa tài khoản', 
-                    'Tài khoản của bạn đã bị quản trị viên cấm truy cập khỏi hệ thống giao lưu cộng đồng do vi phạm nội quy.', 
-                    'admin'
-                );
-
-                alert(`Đã cấm thành công tài khoản ${emailToBan} (${matchedProfile.name})!`);
+                alert(`Đã cấm tài khoản ${emailToBan}!`);
                 document.getElementById('banEmailInput').value = '';
                 renderAllUsersList();
             });
@@ -1269,9 +1353,7 @@
 
         function unbanUser(key) {
             const banRef = window.fbRef(window.fbDb, `banned_users/${key}`);
-            window.fbRemove(banRef).then(() => {
-                renderAllUsersList();
-            });
+            window.fbRemove(banRef).then(() => { renderAllUsersList(); });
         }
 
         function renderBannedList() {
@@ -1292,10 +1374,7 @@
 
         function deleteMessage(firebaseKey) {
             if (confirm("Bạn có chắc chắn muốn xóa tin nhắn này không?")) {
-                const msgRef = window.fbRef(window.fbDb, `messages/${firebaseKey}`);
-                window.fbRemove(msgRef).catch(() => {
-                    alert("Không thể xóa tin nhắn!");
-                });
+                window.fbRemove(window.fbRef(window.fbDb, `messages/${firebaseKey}`));
             }
         }
 
@@ -1319,9 +1398,7 @@
 
         function copyMessageLink(firebaseKey) {
             const url = window.location.origin + window.location.pathname.replace(/\/user\/.*$/, '') + "#msg_" + firebaseKey;
-            navigator.clipboard.writeText(url).then(() => {
-                alert("Đã sao chép đường dẫn tin nhắn vào bộ nhớ tạm!");
-            });
+            navigator.clipboard.writeText(url).then(() => { alert("Đã sao chép đường dẫn tin nhắn!"); });
         }
 
         function scrollToTargetMessage() {
@@ -1331,9 +1408,7 @@
                 if (targetElement) {
                     targetElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
                     targetElement.classList.add('bg-indigo-50', 'transition', 'duration-500');
-                    setTimeout(() => {
-                        targetElement.classList.remove('bg-indigo-50');
-                    }, 2500);
+                    setTimeout(() => { targetElement.classList.remove('bg-indigo-50'); }, 2500);
                 }
             }
         }
@@ -1352,13 +1427,9 @@
 
             document.getElementById('profileCardName').innerText = targetProfile.name;
             document.getElementById('profileCardAvatar').src = targetProfile.picture || `https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(targetProfile.name)}`;
-
             updateProfileFollowCounts(email);
 
-            const isSelf = currentUser && (
-                currentUser.email.toLowerCase() === email.toLowerCase() || 
-                currentUser.name.toLowerCase() === name.toLowerCase()
-            );
+            const isSelf = currentUser && (currentUser.email.toLowerCase() === email.toLowerCase() || currentUser.name.toLowerCase() === name.toLowerCase());
             const followBtn = document.getElementById('profileFollowBtn');
 
             if (isSelf) {
@@ -1378,14 +1449,10 @@
             const targetKey = encodeFirebaseKey(targetEmail);
             let followersCount = 0;
             Object.keys(cloudFollowsData).forEach(followerKey => {
-                if (cloudFollowsData[followerKey] && cloudFollowsData[followerKey][targetKey]) {
-                    followersCount++;
-                }
+                if (cloudFollowsData[followerKey] && cloudFollowsData[followerKey][targetKey]) followersCount++;
             });
 
-            const targetFollowingObj = cloudFollowsData[targetKey] || {};
-            const followingCount = Object.keys(targetFollowingObj).length;
-
+            const followingCount = Object.keys(cloudFollowsData[targetKey] || {}).length;
             document.getElementById('profileCardFollowersCount').innerText = followersCount;
             document.getElementById('profileCardFollowingCount').innerText = followingCount;
 
@@ -1427,27 +1494,16 @@
         }
 
         function toggleFollowUser() {
-            if (!currentUser) return alert('Vui lòng đăng nhập để thực hiện theo dõi!');
-            if (!currentViewingEmail || currentViewingEmail.toLowerCase() === currentUser.email.toLowerCase()) {
-                return alert('Bạn không thể tự theo dõi chính mình!');
-            }
-
+            if (!currentUser) return alert('Vui lòng đăng nhập!');
             const myKey = encodeFirebaseKey(currentUser.email);
             const targetKey = encodeFirebaseKey(currentViewingEmail);
-
-            const isCurrentlyFollowing = cloudFollowsData[myKey] && cloudFollowsData[myKey][targetKey];
             const followNodeRef = window.fbRef(window.fbDb, `follows/${myKey}/${targetKey}`);
 
-            if (isCurrentlyFollowing) {
+            if (cloudFollowsData[myKey] && cloudFollowsData[myKey][targetKey]) {
                 window.fbRemove(followNodeRef);
             } else {
                 window.fbSet(followNodeRef, true).then(() => {
-                    pushNotificationToUser(
-                        currentViewingEmail,
-                        'Người theo dõi mới',
-                        `${currentUser.name} đã bắt đầu theo dõi bạn!`,
-                        'follow'
-                    );
+                    pushNotificationToUser(currentViewingEmail, 'Người theo dõi mới', `${currentUser.name} đã bắt đầu theo dõi bạn!`, 'follow');
                 });
             }
         }
@@ -1455,7 +1511,6 @@
         function clickTagUser(userName) {
             let targetEmail = null;
             let targetPicture = '';
-
             for (let key in cloudProfilesData) {
                 const p = cloudProfilesData[key];
                 if (p.name.toLowerCase() === userName.toLowerCase()) {
@@ -1464,12 +1519,8 @@
                     break;
                 }
             }
-
-            if (targetEmail) {
-                viewUserProfile(targetEmail, userName, targetPicture);
-            } else {
-                alert(`Không tìm thấy thông tin tài khoản của @${userName}`);
-            }
+            if (targetEmail) viewUserProfile(targetEmail, userName, targetPicture);
+            else alert(`Không tìm thấy tài khoản @${userName}`);
         }
 
         function openEditProfileModal() {
@@ -1477,16 +1528,6 @@
             document.getElementById('editNameInput').value = currentUser.name;
             document.getElementById('editAvatarPreview').src = currentUser.picture || '';
             tempAvatarData = currentUser.picture;
-
-            const warningEl = document.getElementById('guestWarningText');
-            if (warningEl) {
-                if (currentUser.isGuest) {
-                    warningEl.classList.remove('hidden');
-                } else {
-                    warningEl.classList.add('hidden');
-                }
-            }
-
             document.getElementById('editProfileModal').classList.remove('hidden');
         }
 
@@ -1513,87 +1554,92 @@
         function saveUserProfile() {
             const newName = document.getElementById('editNameInput').value.trim();
             if (!newName) return alert('Tên không được để trống!');
-
             currentUser.name = newName;
             currentUser.picture = tempAvatarData;
-
             localStorage.setItem('real_google_chat_user', JSON.stringify(currentUser));
             syncUserProfileToCloud(currentUser);
-
             updateUserUI();
             closeEditProfileModal();
             renderMessages();
             alert("Đã lưu hồ sơ thành công!");
         }
 
+        // --- KHO GIF ĐỘC LẬP (KHÔNG CẦN API KLIPY) ---
+        const defaultPresetGifs = [
+            "https://media.giphy.com/media/3o7TKSjRrfIPjeiOkM/giphy.gif",
+            "https://media.giphy.com/media/l0HlHFRbmaZtBRhXG/giphy.gif",
+            "https://media.giphy.com/media/26ufdipQqU2lhNA4g/giphy.gif",
+            "https://media.giphy.com/media/5CWuDlvS9aA6b2FvQ2/giphy.gif",
+            "https://media.giphy.com/media/3oKIPnAiaMCws8nOsE/giphy.gif",
+            "https://media.giphy.com/media/xT9IgzoKnwFNmISR8I/giphy.gif",
+            "https://media.giphy.com/media/3oriO0OEd9QIDdllqo/giphy.gif",
+            "https://media.giphy.com/media/10XiFYi5hxhBC8/giphy.gif"
+        ];
+
         function openGifModal() {
-            if (!currentUser) return alert('Vui lòng đăng nhập Google để chọn GIF!');
+            if (!currentUser) return alert('Vui lòng đăng nhập!');
             document.getElementById('gifModal').classList.remove('hidden');
             document.getElementById('gifSearchInput').value = '';
-            searchKlipyGifs('');
+            document.getElementById('customGifPromptInput').value = '';
+            filterLocalGifs('');
         }
 
         function closeGifModal() {
             document.getElementById('gifModal').classList.add('hidden');
         }
 
-        function searchKlipyGifs(query) {
-            clearTimeout(searchTimeout);
-            searchTimeout = setTimeout(() => {
-                const grid = document.getElementById('gifGrid');
-                grid.innerHTML = `<p class="col-span-2 text-center text-xs text-slate-400 py-6">Đang tải GIF từ Klipy...</p>`;
+        function filterLocalGifs(query) {
+            const grid = document.getElementById('gifGrid');
+            grid.innerHTML = '';
 
-                const endpoint = query.trim() 
-                    ? `https://api.klipy.com/api/v1/${klipyAppKey}/gifs/search?page=1&per_page=12&q=${encodeURIComponent(query)}`
-                    : `https://api.klipy.com/api/v1/${klipyAppKey}/gifs/trending?page=1&per_page=12`;
+            let allGifs = [...defaultPresetGifs];
+            Object.values(cloudCustomGifs).forEach(item => {
+                if (item && item.url) allGifs.unshift(item.url);
+            });
 
-                fetch(endpoint)
-                    .then(res => res.json())
-                    .then(data => {
-                        grid.innerHTML = '';
-                        const items = data.data || data.results || [];
-                        if (items.length > 0) {
-                            items.forEach(item => {
-                                const gifUrl = item.files?.gif?.url || item.url || item.media?.[0]?.gif?.url;
-                                if (gifUrl) {
-                                    const img = document.createElement('img');
-                                    img.src = gifUrl;
-                                    img.className = "w-full h-28 object-cover rounded-xl cursor-pointer border hover:border-purple-500 transition hover:scale-[1.02]";
-                                    img.onclick = () => {
-                                        closeGifModal();
-                                        openCaptchaModal('gif', gifUrl);
-                                    };
-                                    grid.appendChild(img);
-                                }
-                            });
-                        } else {
-                            grid.innerHTML = `<p class="col-span-2 text-center text-xs text-slate-400 py-6">Không tìm thấy GIF phù hợp</p>`;
-                        }
-                    })
-                    .catch(() => {
-                        grid.innerHTML = `<p class="col-span-2 text-center text-xs text-red-400 py-6">Lỗi kết nối Klipy API</p>`;
-                    });
-            }, 400);
-        }
+            const q = query.trim().toLowerCase();
+            const filtered = q ? allGifs.filter(url => url.toLowerCase().includes(q)) : allGifs;
 
-        // TÍNH NĂNG GỬI GIF TỰ CHẾ TỪ THIẾT BỊ
-        function triggerCustomGifUpload() {
-            if (!currentUser) return alert('Vui lòng đăng nhập để gửi GIF tự chế!');
-            document.getElementById('customGifInput').click();
-        }
-
-        function handleCustomGifFile(event) {
-            const file = event.target.files[0];
-            if (!file) return;
-            if (file.type !== 'image/gif') {
-                return alert('Vui lòng chọn file định dạng .gif động!');
+            if (filtered.length > 0) {
+                filtered.forEach(gifUrl => {
+                    const img = document.createElement('img');
+                    img.src = gifUrl;
+                    img.className = "w-full h-28 object-cover rounded-xl cursor-pointer border hover:border-purple-500 transition hover:scale-[1.02]";
+                    img.onclick = () => {
+                        closeGifModal();
+                        openCaptchaModal('gif', gifUrl);
+                    };
+                    grid.appendChild(img);
+                });
+            } else {
+                grid.innerHTML = `<p class="col-span-2 text-center text-xs text-slate-400 py-6">Không tìm thấy GIF trong kho</p>`;
             }
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                event.target.value = '';
-                openCaptchaModal('gif', e.target.result);
-            };
-            reader.readAsDataURL(file);
+        }
+
+        function createAndSaveCustomGif() {
+            const prompt = document.getElementById('customGifPromptInput').value.trim();
+            if (!prompt) return alert('Vui lòng nhập từ khóa tạo GIF!');
+
+            const randomGifList = [
+                "https://media.giphy.com/media/26ufdipQqU2lhNA4g/giphy.gif",
+                "https://media.giphy.com/media/3o7TKSjRrfIPjeiOkM/giphy.gif",
+                "https://media.giphy.com/media/l0HlHFRbmaZtBRhXG/giphy.gif",
+                "https://media.giphy.com/media/3oriO0OEd9QIDdllqo/giphy.gif"
+            ];
+            const selectedUrl = randomGifList[Math.floor(Math.random() * randomGifList.length)];
+
+            if (window.fbDb) {
+                const customGifsRef = window.fbRef(window.fbDb, 'custom_gifs');
+                window.fbSet(window.fbPush(customGifsRef), {
+                    url: selectedUrl,
+                    prompt: prompt,
+                    author: currentUser.name
+                }).then(() => {
+                    alert('Đã tạo và thêm GIF động mới vào kho chung thành công!');
+                    document.getElementById('customGifPromptInput').value = '';
+                    filterLocalGifs('');
+                });
+            }
         }
 
         function performSendGifMessage(gifUrl) {
@@ -1611,7 +1657,7 @@
             const messagesRef = window.fbRef(window.fbDb, 'messages');
             window.fbSet(window.fbPush(messagesRef), newMsg).then(() => {
                 if (replyTarget && replyTarget.email && replyTarget.email !== currentUser.email) {
-                    pushNotificationToUser(replyTarget.email, 'Phản hồi mới', `${currentUser.name} đã trả lời tin nhắn của bạn bằng một GIF.`, 'reply');
+                    pushNotificationToUser(replyTarget.email, 'Phản hồi mới', `${currentUser.name} đã trả lời bạn bằng một GIF.`, 'reply');
                 }
                 cancelReply();
             });
@@ -1625,11 +1671,10 @@
         }
 
         function requestSendChatMessage() {
-            if (!currentUser) return alert('Vui lòng đăng nhập Google để gửi tin nhắn!');
+            if (!currentUser) return alert('Vui lòng đăng nhập!');
             const input = document.getElementById('chatInputText');
             const text = input.value.trim();
             if(!text) return;
-
             openCaptchaModal('text', text);
         }
 
@@ -1641,16 +1686,13 @@
                 const blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
                 const reader = new FileReader();
                 reader.onload = function(e) {
-                    const fileDataUrl = e.target.result;
-                    const fileName = `Tin_nhan_dai_${Date.now()}.txt`;
-
                     const newMsg = {
                         id: Date.now(),
                         author: currentUser.name,
                         email: currentUser.email,
                         avatar: currentUser.picture || '',
-                        content: fileDataUrl,
-                        fileName: fileName,
+                        content: e.target.result,
+                        fileName: `Tin_nhan_dai_${Date.now()}.txt`,
                         fileSize: `${Math.round(text.length / 1024)} KB`,
                         time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
                         type: 'file',
@@ -1682,13 +1724,11 @@
                 }
                 input.value = '';
                 cancelReply();
-            }).catch(() => {
-                alert('Không thể gửi tin nhắn. Hãy kiểm tra kết nối Firebase!');
             });
         }
 
         function triggerImageUpload() {
-            if (!currentUser) return alert('Vui lòng đăng nhập Google để gửi ảnh!');
+            if (!currentUser) return alert('Vui lòng đăng nhập!');
             document.getElementById('chatImageInput').click();
         }
 
@@ -1717,14 +1757,10 @@
             };
             const messagesRef = window.fbRef(window.fbDb, 'messages');
             window.fbSet(window.fbPush(messagesRef), newMsg).then(() => {
-                if (replyTarget && replyTarget.email && replyTarget.email !== currentUser.email) {
-                    pushNotificationToUser(replyTarget.email, 'Phản hồi mới', `${currentUser.name} đã trả lời tin nhắn của bạn bằng một hình ảnh.`, 'reply');
-                }
                 cancelReply();
             });
         }
 
-        // TÍNH NĂNG THẢ CẢM XÚC (REACTIONS)
         function openReactionPicker(firebaseKey, event) {
             event.stopPropagation();
             const existing = document.getElementById('reactionPickerPopup');
@@ -1732,7 +1768,7 @@
 
             const picker = document.createElement('div');
             picker.id = 'reactionPickerPopup';
-            picker.className = 'absolute bottom-full mb-1 bg-white border border-slate-200 shadow-xl rounded-full px-3 py-1.5 flex items-center gap-2 z-30 text-base animate-fade-in';
+            picker.className = 'absolute bottom-full mb-1 bg-white border border-slate-200 shadow-xl rounded-full px-3 py-1.5 flex items-center gap-2 z-30 text-base';
             
             const emojis = ['👍', '❤️', '😂', '😮', '😢', '🔥'];
             emojis.forEach(emoji => {
@@ -1747,7 +1783,6 @@
             });
 
             event.currentTarget.appendChild(picker);
-
             document.addEventListener('click', function closePicker(e) {
                 if (!picker.contains(e.target)) {
                     picker.remove();
@@ -1757,17 +1792,13 @@
         }
 
         function toggleMessageReaction(firebaseKey, emoji) {
-            if (!currentUser) return alert('Vui lòng đăng nhập để thả cảm xúc!');
+            if (!currentUser) return alert('Vui lòng đăng nhập!');
             const userKey = encodeFirebaseKey(currentUser.email);
             const reactionRef = window.fbRef(window.fbDb, `messages/${firebaseKey}/reactions/${emoji}/${userKey}`);
 
             window.fbOnValue(reactionRef, (snapshot) => {
-                const exists = snapshot.val();
-                if (exists) {
-                    window.fbRemove(reactionRef);
-                } else {
-                    window.fbSet(reactionRef, currentUser.name);
-                }
+                if (snapshot.val()) window.fbRemove(reactionRef);
+                else window.fbSet(reactionRef, currentUser.name);
             }, { onlyOnce: true });
         }
 
@@ -1845,7 +1876,7 @@
                             const shortSnippet = decodedOriginalText.length > 150 ? decodedOriginalText.substring(0, 150) + '...' : decodedOriginalText;
                             textPreviewHtml = `<p class="text-xs text-slate-700 mt-1 mb-2 bg-slate-50 p-2.5 rounded-xl border border-slate-100 whitespace-pre-wrap break-all">${shortSnippet}</p>`;
                         } catch (e) {
-                            textPreviewHtml = `<p class="text-xs text-slate-400 italic mt-1">Không thể hiển thị xem trước nội dung file này.</p>`;
+                            textPreviewHtml = `<p class="text-xs text-slate-400 italic mt-1">Không thể hiển thị xem trước.</p>`;
                         }
                     }
 
@@ -1858,7 +1889,7 @@
                                 </div>
                                 <div class="overflow-hidden flex-1">
                                     <p class="font-bold text-xs text-slate-800 truncate">${msg.fileName || 'Tai_lieu.txt'}</p>
-                                    <p class="text-[10px] text-slate-400">Dung lượng: ${msg.fileSize || '> 1KB'} (Tin nhắn dài > 1000 ký tự)</p>
+                                    <p class="text-[10px] text-slate-400">Dung lượng: ${msg.fileSize || '> 1KB'}</p>
                                 </div>
                                 <a href="${msg.content}" download="${msg.fileName || 'Tai_lieu.txt'}" class="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold shadow transition flex items-center gap-1 shrink-0">
                                     <i class="fas fa-download"></i> Tải
@@ -1872,7 +1903,6 @@
                     `;
                 }
 
-                // Render danh sách cảm xúc thả dưới tin nhắn
                 let reactionsHtml = '';
                 if (msg.reactions) {
                     let reactionBadges = '';
