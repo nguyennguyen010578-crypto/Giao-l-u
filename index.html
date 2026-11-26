@@ -138,7 +138,7 @@
 
             <div class="p-4 bg-white border-t border-slate-200">
                 <div class="bg-slate-50 border border-slate-200 rounded-2xl p-3 space-y-2 focus-within:border-indigo-500 transition">
-                    <textarea id="chatInputText" onkeydown="handleKeySend(event)" placeholder="Nhập tin nhắn giao lưu... (Dán link web, dùng @tên để nhắc ai đó, Nhấn Enter để gửi)" rows="2" class="w-full bg-transparent text-xs text-slate-800 placeholder-slate-400 outline-none resize-none"></textarea>
+                    <textarea id="chatInputText" onkeydown="handleKeySend(event)" placeholder="Nhập tin nhắn giao lưu... (Nếu > 1000 ký tự sẽ tự động đóng gói thành file .txt, Nhấn Enter để gửi)" rows="2" class="w-full bg-transparent text-xs text-slate-800 placeholder-slate-400 outline-none resize-none"></textarea>
                     
                     <div class="flex items-center justify-between pt-2 border-t border-slate-200/60 text-xs">
                         <div class="flex items-center gap-3 text-slate-500">
@@ -147,6 +147,9 @@
                             </button>
                             <button onclick="openGifModal()" class="hover:text-indigo-600 flex items-center gap-1 font-medium text-purple-600" title="Chọn GIF Klipy">
                                 <i class="fas fa-film text-base"></i> Kho GIF Klipy
+                            </button>
+                            <button onclick="triggerCustomGifUpload()" class="hover:text-indigo-600 flex items-center gap-1 font-medium text-amber-600" title="Tải GIF tự chế từ máy">
+                                <i class="fas fa-upload text-base"></i> Tải GIF tự chế
                             </button>
                         </div>
 
@@ -206,12 +209,9 @@
                 <button onclick="closeAttendanceModal()" class="text-slate-400 hover:text-slate-600"><i class="fas fa-times text-lg"></i></button>
             </div>
 
-            <p class="text-xs text-slate-500 text-center">Điểm danh mỗi ngày để tích lũy xu AT (Chỉ dành riêng cho tài khoản Admin).</p>
+            <p class="text-xs text-slate-500 text-center">Điểm danh mỗi ngày để tích lũy xu AT (Áp dụng cho mọi tài khoản đăng nhập bằng Gmail thật).</p>
 
-            <!-- LƯỚI 7 NGÀY ĐIỂM DANH -->
-            <div id="attendanceGrid" class="grid grid-cols-4 gap-2.5 py-2">
-                <!-- Render bằng JS -->
-            </div>
+            <div id="attendanceGrid" class="grid grid-cols-4 gap-2.5 py-2"></div>
 
             <div class="flex items-center justify-between pt-3 border-t">
                 <button id="claimAttendanceBtn" onclick="claimDailyAttendance()" class="w-full py-2.5 bg-amber-500 hover:bg-amber-600 text-white rounded-xl font-bold text-xs shadow transition flex items-center justify-center gap-2">
@@ -222,6 +222,7 @@
     </div>
 
     <input type="file" id="chatImageInput" accept="image/*" class="hidden" onchange="handleChatImage(event)">
+    <input type="file" id="customGifInput" accept="image/gif" class="hidden" onchange="handleCustomGifFile(event)">
     <input type="file" id="avatarFileInput" accept="image/*" class="hidden" onchange="handleAvatarFileSelect(event)">
 
     <!-- GOOGLE AUTHENTICATION MODAL -->
@@ -244,7 +245,6 @@
                 <div class="g_id_signin" data-type="standard" data-size="large" data-theme="outline" data-text="sign_in_with" data-shape="pill" data-logo_alignment="left"></div>
             </div>
 
-            <!-- DÒNG ĐĂNG KÝ KHÔNG CẦN EMAIL VÀ LƯU Ý -->
             <div class="pt-3 border-t border-slate-100 space-y-2">
                 <button onclick="loginAsGuestUser()" class="text-xs text-indigo-600 hover:text-indigo-800 font-bold underline transition block mx-auto">
                     Đăng ký không cần email
@@ -588,7 +588,6 @@
 
         window.onload = initApp;
 
-        // Đăng ký tài khoản Khách với tên tự động tăng dần và đồng bộ Firebase
         function loginAsGuestUser() {
             let guestCounter = parseInt(localStorage.getItem('chat_guest_counter') || '0') + 1;
             localStorage.setItem('chat_guest_counter', guestCounter);
@@ -650,11 +649,7 @@
 
         function addEnergy(amount) {
             if (!currentUser || !window.fbDb) return;
-            
-            const isAdminUser = checkIsAdmin(currentUser.email, currentUser.name);
-            if (!isAdminUser) {
-                return; 
-            }
+            if (currentUser.isGuest) return; 
 
             userEnergy += amount;
             updateEnergyUI();
@@ -745,15 +740,13 @@
 
         function claimDailyAttendance() {
             if (!currentUser || !window.fbDb) return;
-
-            if (!checkIsAdmin(currentUser.email, currentUser.name)) {
-                alert('Tính năng điểm danh nhận xu AT chỉ dành riêng cho tài khoản Quản trị viên (Admin)!');
+            if (currentUser.isGuest) {
+                alert('Tài khoản Khách không thể điểm danh nhận xu AT! Vui lòng đăng nhập bằng tài khoản Google thật.');
                 closeAttendanceModal();
                 return;
             }
 
             const todayStr = new Date().toISOString().split('T')[0];
-
             if (attendanceData.lastCheckInDate === todayStr) {
                 return alert('Bạn đã điểm danh ngày hôm nay rồi!');
             }
@@ -762,7 +755,6 @@
             if (nextStreak > 7) nextStreak = 1;
 
             const rewardCoins = attendanceRewards[nextStreak - 1];
-
             attendanceData.streakDay = nextStreak;
             attendanceData.lastCheckInDate = todayStr;
 
@@ -1255,7 +1247,6 @@
             }
 
             const emailToBan = matchedProfile.email.toLowerCase();
-
             if (isAccountProtectedAdmin(emailToBan)) {
                 alert('Hệ thống bảo vệ: Admin không thể cấm một Admin khác!');
                 return;
@@ -1351,7 +1342,6 @@
             const basePath = window.location.pathname.replace(/\/user\/.*$/, '').replace(/\/$/, '');
             const newUrl = `${window.location.origin}${basePath}/user/${encodeURIComponent(name)}`;
             history.pushState({ profile: name }, "", newUrl);
-
             openProfileModalRaw(email, name, picture);
         }
 
@@ -1586,6 +1576,26 @@
             }, 400);
         }
 
+        // TÍNH NĂNG GỬI GIF TỰ CHẾ TỪ THIẾT BỊ
+        function triggerCustomGifUpload() {
+            if (!currentUser) return alert('Vui lòng đăng nhập để gửi GIF tự chế!');
+            document.getElementById('customGifInput').click();
+        }
+
+        function handleCustomGifFile(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            if (file.type !== 'image/gif') {
+                return alert('Vui lòng chọn file định dạng .gif động!');
+            }
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                event.target.value = '';
+                openCaptchaModal('gif', e.target.result);
+            };
+            reader.readAsDataURL(file);
+        }
+
         function performSendGifMessage(gifUrl) {
             const replyTarget = replyingTo ? { ...replyingTo } : null;
             const newMsg = {
@@ -1626,21 +1636,49 @@
         function performSendChatMessage(text) {
             const input = document.getElementById('chatInputText');
             const replyTarget = replyingTo ? { ...replyingTo } : null;
-            const newMsg = {
-                id: Date.now(),
-                author: currentUser.name,
-                email: currentUser.email,
-                avatar: currentUser.picture || '',
-                content: text,
-                time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-                type: 'text',
-                replyTo: replyTarget
-            };
 
+            if (text.length > 1000) {
+                const blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const fileDataUrl = e.target.result;
+                    const fileName = `Tin_nhan_dai_${Date.now()}.txt`;
+
+                    const newMsg = {
+                        id: Date.now(),
+                        author: currentUser.name,
+                        email: currentUser.email,
+                        avatar: currentUser.picture || '',
+                        content: fileDataUrl,
+                        fileName: fileName,
+                        fileSize: `${Math.round(text.length / 1024)} KB`,
+                        time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+                        type: 'file',
+                        replyTo: replyTarget
+                    };
+                    sendMsgToFirebase(newMsg, replyTarget, input);
+                };
+                reader.readAsDataURL(blob);
+            } else {
+                const newMsg = {
+                    id: Date.now(),
+                    author: currentUser.name,
+                    email: currentUser.email,
+                    avatar: currentUser.picture || '',
+                    content: text,
+                    time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+                    type: 'text',
+                    replyTo: replyTarget
+                };
+                sendMsgToFirebase(newMsg, replyTarget, input);
+            }
+        }
+
+        function sendMsgToFirebase(newMsg, replyTarget, input) {
             const messagesRef = window.fbRef(window.fbDb, 'messages');
             window.fbSet(window.fbPush(messagesRef), newMsg).then(() => {
                 if (replyTarget && replyTarget.email && replyTarget.email !== currentUser.email) {
-                    pushNotificationToUser(replyTarget.email, 'Phản hồi mới', `${currentUser.name} đã trả lời bạn: "${text.substring(0, 35)}..."`, 'reply');
+                    pushNotificationToUser(replyTarget.email, 'Phản hồi mới', `${currentUser.name} đã trả lời bạn.`, 'reply');
                 }
                 input.value = '';
                 cancelReply();
@@ -1686,13 +1724,58 @@
             });
         }
 
+        // TÍNH NĂNG THẢ CẢM XÚC (REACTIONS)
+        function openReactionPicker(firebaseKey, event) {
+            event.stopPropagation();
+            const existing = document.getElementById('reactionPickerPopup');
+            if (existing) existing.remove();
+
+            const picker = document.createElement('div');
+            picker.id = 'reactionPickerPopup';
+            picker.className = 'absolute bottom-full mb-1 bg-white border border-slate-200 shadow-xl rounded-full px-3 py-1.5 flex items-center gap-2 z-30 text-base animate-fade-in';
+            
+            const emojis = ['👍', '❤️', '😂', '😮', '😢', '🔥'];
+            emojis.forEach(emoji => {
+                const btn = document.createElement('button');
+                btn.innerText = emoji;
+                btn.className = 'hover:scale-125 transition transform';
+                btn.onclick = () => {
+                    toggleMessageReaction(firebaseKey, emoji);
+                    picker.remove();
+                };
+                picker.appendChild(btn);
+            });
+
+            event.currentTarget.appendChild(picker);
+
+            document.addEventListener('click', function closePicker(e) {
+                if (!picker.contains(e.target)) {
+                    picker.remove();
+                    document.removeEventListener('click', closePicker);
+                }
+            }, { once: true });
+        }
+
+        function toggleMessageReaction(firebaseKey, emoji) {
+            if (!currentUser) return alert('Vui lòng đăng nhập để thả cảm xúc!');
+            const userKey = encodeFirebaseKey(currentUser.email);
+            const reactionRef = window.fbRef(window.fbDb, `messages/${firebaseKey}/reactions/${emoji}/${userKey}`);
+
+            window.fbOnValue(reactionRef, (snapshot) => {
+                const exists = snapshot.val();
+                if (exists) {
+                    window.fbRemove(reactionRef);
+                } else {
+                    window.fbSet(reactionRef, currentUser.name);
+                }
+            }, { onlyOnce: true });
+        }
+
         function loadMoreOldMessages() {
             const container = document.getElementById('chatMessagesContainer');
             const previousScrollHeight = container.scrollHeight;
-            
             visibleMessageLimit += 20; 
             renderMessages(true); 
-
             container.scrollTop = container.scrollHeight - previousScrollHeight;
         }
 
@@ -1706,7 +1789,6 @@
             }
 
             const isAdmin = currentUser ? checkIsAdmin(currentUser.email, currentUser.name) : false;
-
             const totalMessages = messages.length;
             const startIndex = Math.max(0, totalMessages - visibleMessageLimit);
             const messagesToDisplay = messages.slice(startIndex);
@@ -1754,6 +1836,60 @@
                     bodyContent = `<div class="mt-1">${replyHtml}<img src="${msg.content}" class="max-w-[280px] rounded-2xl border shadow-sm"></div>`;
                 } else if(msg.type === 'gif') {
                     bodyContent = `<div class="mt-1">${replyHtml}<img src="${msg.content}" class="max-w-[220px] rounded-2xl border shadow-sm"></div>`;
+                } else if(msg.type === 'file') {
+                    let textPreviewHtml = `<span class="text-[11px] text-slate-500 italic">Đang tải nội dung xem trước...</span>`;
+                    if (msg.content && msg.content.startsWith('data:text/plain')) {
+                        try {
+                            const base64Part = msg.content.split(',')[1];
+                            const decodedOriginalText = decodeURIComponent(escape(atob(base64Part)));
+                            const shortSnippet = decodedOriginalText.length > 150 ? decodedOriginalText.substring(0, 150) + '...' : decodedOriginalText;
+                            textPreviewHtml = `<p class="text-xs text-slate-700 mt-1 mb-2 bg-slate-50 p-2.5 rounded-xl border border-slate-100 whitespace-pre-wrap break-all">${shortSnippet}</p>`;
+                        } catch (e) {
+                            textPreviewHtml = `<p class="text-xs text-slate-400 italic mt-1">Không thể hiển thị xem trước nội dung file này.</p>`;
+                        }
+                    }
+
+                    bodyContent = `
+                        <div class="mt-1 bg-white border border-slate-200 rounded-2xl px-4 py-3 shadow-sm inline-block text-left max-w-md">
+                            ${replyHtml}
+                            <div class="flex items-center gap-3 border-b border-slate-100 pb-2 mb-2">
+                                <div class="w-9 h-9 bg-indigo-50 text-indigo-600 rounded-xl flex items-center justify-center font-bold text-sm shrink-0">
+                                    <i class="fas fa-file-alt"></i>
+                                </div>
+                                <div class="overflow-hidden flex-1">
+                                    <p class="font-bold text-xs text-slate-800 truncate">${msg.fileName || 'Tai_lieu.txt'}</p>
+                                    <p class="text-[10px] text-slate-400">Dung lượng: ${msg.fileSize || '> 1KB'} (Tin nhắn dài > 1000 ký tự)</p>
+                                </div>
+                                <a href="${msg.content}" download="${msg.fileName || 'Tai_lieu.txt'}" class="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold shadow transition flex items-center gap-1 shrink-0">
+                                    <i class="fas fa-download"></i> Tải
+                                </a>
+                            </div>
+                            <div>
+                                <span class="text-[10px] font-bold text-indigo-600 uppercase tracking-wide block mb-0.5">Nội dung xem trước:</span>
+                                ${textPreviewHtml}
+                            </div>
+                        </div>
+                    `;
+                }
+
+                // Render danh sách cảm xúc thả dưới tin nhắn
+                let reactionsHtml = '';
+                if (msg.reactions) {
+                    let reactionBadges = '';
+                    Object.keys(msg.reactions).forEach(emoji => {
+                        const usersMap = msg.reactions[emoji];
+                        const count = Object.keys(usersMap).length;
+                        const userNames = Object.values(usersMap).join(', ');
+                        const hasMyReaction = currentUser && usersMap[encodeFirebaseKey(currentUser.email)];
+
+                        reactionBadges += `
+                            <span onclick="toggleMessageReaction('${msg.firebaseKey}', '${emoji}')" title="Thả bởi: ${userNames}" class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] border cursor-pointer transition ${hasMyReaction ? 'bg-indigo-50 border-indigo-300 text-indigo-700 font-bold' : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'}">
+                                <span>${emoji}</span>
+                                <span>${count}</span>
+                            </span>
+                        `;
+                    });
+                    reactionsHtml = `<div class="flex flex-wrap items-center gap-1 mt-1.5">${reactionBadges}</div>`;
                 }
 
                 const safeAuthor = displayAuthor.replace(/'/g, "\\'");
@@ -1764,6 +1900,7 @@
                 const canDelete = isAdmin || isMyMsg;
                 const actionsHtml = `
                     <div class="absolute ${isMyMsg ? 'right-full mr-2' : 'left-full ml-2'} top-2 hidden group-hover:flex items-center gap-1 bg-white border border-slate-200 shadow-sm rounded-lg px-2 py-1 text-[11px] z-10">
+                        <button onclick="openReactionPicker('${msg.firebaseKey}', event)" class="text-amber-500 hover:text-amber-600 px-1" title="Thả cảm xúc"><i class="far fa-smile"></i></button>
                         <button onclick="replyToMessage('${msg.firebaseKey}', '${safeAuthor}', '${(msg.type === 'text' ? msg.content : '[Đính kèm media]').replace(/'/g, "\\'")}', '${msg.email || ''}')" class="text-indigo-600 hover:text-indigo-800 px-1" title="Trả lời"><i class="fas fa-reply"></i></button>
                         <button onclick="copyMessageLink('${msg.firebaseKey}')" class="text-slate-500 hover:text-slate-700 px-1" title="Sao chép đường dẫn"><i class="fas fa-link"></i></button>
                         ${canDelete ? `<button onclick="deleteMessage('${msg.firebaseKey}')" class="text-red-500 hover:text-red-700 px-1" title="Xóa tin nhắn"><i class="fas fa-trash"></i></button>` : ''}
@@ -1778,6 +1915,7 @@
                             <span class="text-[10px] text-slate-400">${msg.time}</span>
                         </div>
                         ${bodyContent}
+                        ${reactionsHtml}
                         ${actionsHtml}
                     </div>
                 `;
