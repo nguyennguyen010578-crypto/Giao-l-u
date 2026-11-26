@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Kênh Giao Lưu Cộng Đồng</title>
     
-    <!-- FAVICON TRÁI ĐẤT TRẮNG ĐEN (SVG DATA URI) -->
+    <!-- FAVICON TRÁI ĐẤT TRÁNG ĐEN (SVG DATA URI) -->
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'><path fill='%23000000' d='M256 0c141.4 0 256 114.6 256 256S397.4 512 256 512 0 397.4 0 256 114.6 0 256 0zm-11.8 32C121 32 32 121 32 244.2c2.7-.1 5.4-.2 8.2-.2 38.3 0 71.9 22.3 88 54.8 6.4 13 18.2 22.2 32.2 25 14 2.8 28.5-2.2 37.8-13l21.2-24.8c10.4-12.1 26-19 42.1-18.6 16.1.4 31.3 8 40.7 20.6l23.5 31.3c8.9 11.9 23 18.9 37.8 18.9h41.1c25.8 0 46.7 20.9 46.7 46.7 0 11.8-4.5 23.2-12.6 31.8l-12.8 13.7c29.1-38.3 46.3-86.2 46.3-138.2 0-111.4-79.9-204.2-185.1-222.2z'/></svg>">
 
     <!-- Tailwind CSS CDN -->
@@ -235,18 +235,18 @@
     <input type="file" id="chatImageInput" accept="image/*" class="hidden" onchange="handleChatImage(event)">
     <input type="file" id="avatarFileInput" accept="image/*" class="hidden" onchange="handleAvatarFileSelect(event)">
 
-    <!-- GOOGLE AUTHENTICATION MODAL -->
+    <!-- GOOGLE & GUEST AUTHENTICATION MODAL -->
     <div id="loginModal" class="fixed inset-0 z-50 bg-slate-900/70 backdrop-blur-sm flex items-center justify-center p-4">
         <div class="bg-white rounded-3xl shadow-2xl max-w-sm w-full p-8 space-y-5 border border-slate-100 text-center">
             <div class="w-14 h-14 bg-indigo-50 text-indigo-600 rounded-2xl mx-auto flex items-center justify-center text-2xl shadow mb-2">
-                <i class="fab fa-google"></i>
+                <i class="fas fa-comments"></i>
             </div>
             <div class="space-y-1">
-                <h3 class="font-bold text-xl text-slate-800">Xác thực tài khoản Google</h3>
-                <p class="text-xs text-slate-500">Đăng nhập bằng tài khoản Gmail thật của bạn để tham gia phòng chat</p>
+                <h3 class="font-bold text-xl text-slate-800">Đăng Nhập Hệ Thống</h3>
+                <p class="text-xs text-slate-500">Chọn phương thức đăng nhập để tham gia phòng chat</p>
             </div>
             
-            <div class="flex justify-center py-2">
+            <div class="flex justify-center py-1">
                 <div id="g_id_onload"
                      data-client_id="474895252858-e9nkstvak3uj4p2r10jbr32st8m4rgqn.apps.googleusercontent.com"
                      data-callback="handleGoogleCredentialResponse"
@@ -255,12 +255,18 @@
                 <div class="g_id_signin" data-type="standard" data-size="large" data-theme="outline" data-text="sign_in_with" data-shape="pill" data-logo_alignment="left"></div>
             </div>
 
-            <div class="pt-3 border-t border-slate-100 space-y-2">
-                <button onclick="loginAsGuestUser()" class="text-xs text-indigo-600 hover:text-indigo-800 font-bold underline transition block mx-auto">
-                    Đăng ký không cần email
+            <!-- PHẦN ĐĂNG NHẬP TÀI KHOẢN KHÁCH CÓ Ô NHẬP TÊN VÀ MẬT KHẨU -->
+            <div class="pt-3 border-t border-slate-100 space-y-3 text-left">
+                <p class="text-xs font-bold text-slate-700 text-center">Hoặc đăng nhập tài khoản khách:</p>
+                <div class="space-y-2">
+                    <input type="text" id="guestNameInput" placeholder="Nhập tên hiển thị..." class="w-full px-3 py-2 border rounded-xl text-xs outline-none focus:border-indigo-500 transition">
+                    <input type="password" id="guestPassInput" placeholder="Nhập mật khẩu..." class="w-full px-3 py-2 border rounded-xl text-xs outline-none focus:border-indigo-500 transition">
+                </div>
+                <button onclick="loginAsGuestUser()" class="w-full py-2.5 bg-slate-900 hover:bg-slate-800 text-white rounded-xl font-bold text-xs shadow transition flex items-center justify-center gap-2">
+                    <i class="fas fa-user-secret"></i> Vào phòng chat ngay
                 </button>
-                <p class="text-[10px] text-amber-600 bg-amber-50 border border-amber-200 px-3 py-2 rounded-xl leading-relaxed">
-                    <i class="fas fa-exclamation-triangle mr-1"></i> Lưu ý: Bạn sẽ không thể dùng hay kiếm xu AT khi sử dụng tài khoản này.
+                <p class="text-[10px] text-amber-600 bg-amber-50 border border-amber-200 px-3 py-2 rounded-xl leading-relaxed text-center">
+                    <i class="fas fa-exclamation-triangle mr-1"></i> Lưu ý: Tài khoản khách không thể dùng hay kiếm xu AT.
                 </p>
             </div>
         </div>
@@ -433,9 +439,6 @@
                     <label class="block text-xs font-bold text-slate-600 mb-1">Tên hiển thị:</label>
                     <input type="text" id="editNameInput" class="w-full px-3 py-2 border rounded-xl text-xs outline-none focus:border-indigo-500 transition">
                 </div>
-                <p id="guestWarningText" class="hidden text-[10px] text-amber-600 bg-amber-50 border border-amber-200 px-3 py-2 rounded-xl">
-                    <i class="fas fa-info-circle mr-1"></i> Lưu ý: Bạn đang dùng tài khoản khách, sẽ không thể kiếm xu AT.
-                </p>
             </div>
 
             <div class="flex items-center justify-end gap-2 pt-2 border-t">
@@ -575,7 +578,6 @@
             return str.toLowerCase().replace(/\./g, '_dot_').replace(/@/g, '_at_').replace(/[#$\[\]\/]/g, '_');
         }
 
-        // ĐỒNG BỘ TRẠNG THÁI TRỰC TUYẾN LIÊN TỤC CHO MỌI TÀI KHOẢN (KỂ CẢ KHÁCH)
         setInterval(() => {
             updateMyPresence();
         }, 20000);
@@ -595,6 +597,12 @@
 
         function initApp() {
             try {
+                // Tự động điền lại thông tin khách nếu đã từng lưu trước đó
+                const savedGuestName = localStorage.getItem('saved_guest_name');
+                const savedGuestPass = localStorage.getItem('saved_guest_pass');
+                if (savedGuestName) document.getElementById('guestNameInput').value = savedGuestName;
+                if (savedGuestPass) document.getElementById('guestPassInput').value = savedGuestPass;
+
                 const savedUser = localStorage.getItem('real_google_chat_user');
                 if (savedUser) {
                     currentUser = JSON.parse(savedUser);
@@ -630,18 +638,31 @@
         window.onload = initApp;
 
         function loginAsGuestUser() {
-            let guestCounter = parseInt(localStorage.getItem('chat_guest_counter') || '0') + 1;
-            localStorage.setItem('chat_guest_counter', guestCounter);
+            const inputName = document.getElementById('guestNameInput').value.trim();
+            const inputPass = document.getElementById('guestPassInput').value.trim();
 
-            const guestId = `guest_${guestCounter}`;
-            const guestName = `Khách ${guestCounter}`;
-            const guestEmail = `${guestId}@noemail.com`;
-            const guestPicture = `https://api.dicebear.com/7.x/bottts/svg?seed=Guest${guestCounter}`;
+            if (!inputName) {
+                alert('Vui lòng nhập tên hiển thị của bạn!');
+                return;
+            }
+            if (!inputPass) {
+                alert('Vui lòng nhập mật khẩu cho tài khoản khách!');
+                return;
+            }
+
+            // Lưu lại tên và mật khẩu vào localStorage để lần sau đăng xuất ra đăng nhập lại tự có sẵn
+            localStorage.setItem('saved_guest_name', inputName);
+            localStorage.setItem('saved_guest_pass', inputPass);
+
+            const guestName = inputName;
+            const guestEmail = `${encodeFirebaseKey(guestName)}@guest.local`;
+            const guestPicture = `https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(guestName)}`;
 
             currentUser = {
                 name: guestName,
                 email: guestEmail,
                 picture: guestPicture,
+                password: inputPass,
                 isGuest: true
             };
 
@@ -666,7 +687,6 @@
             updateMyPresence();
             renderMessages();
             openInitialCaptchaModal();
-            openEditProfileModal();
         }
 
         function loadUserEnergy(email) {
@@ -1072,7 +1092,6 @@
                 }
             });
 
-            // LẮNG NGHE DANH SÁCH ONLINE TRÊN FIREBASE
             const presenceRef = window.fbRef(window.fbDb, 'online_presence');
             window.fbOnValue(presenceRef, (snapshot) => {
                 const data = snapshot.val() || {};
@@ -1087,7 +1106,7 @@
             if (!sidebar || !container || !badge) return;
 
             const now = Date.now();
-            const activeThreshold = 3 * 60 * 1000; // Hoạt động trong vòng 3 phút
+            const activeThreshold = 3 * 60 * 1000;
             let onlineUsers = [];
 
             Object.keys(presenceData).forEach(key => {
@@ -1172,6 +1191,13 @@
             localStorage.removeItem('real_google_chat_user');
             currentUser = null;
             isCaptchaVerified = false;
+            
+            // Tải lại thông tin khách đã lưu lên ô input để sẵn sàng cho lần đăng nhập sau
+            const savedGuestName = localStorage.getItem('saved_guest_name');
+            const savedGuestPass = localStorage.getItem('saved_guest_pass');
+            if (savedGuestName) document.getElementById('guestNameInput').value = savedGuestName;
+            if (savedGuestPass) document.getElementById('guestPassInput').value = savedGuestPass;
+
             document.getElementById('loginModal').classList.remove('hidden');
             document.getElementById('adminSettingBtn').classList.add('hidden');
             document.getElementById('notificationWrapper').classList.add('hidden');
@@ -1564,7 +1590,6 @@
             alert("Đã lưu hồ sơ thành công!");
         }
 
-        // --- KHO GIF ĐỘC LẬP (KHÔNG CẦN API KLIPY) ---
         const defaultPresetGifs = [
             "https://media.giphy.com/media/3o7TKSjRrfIPjeiOkM/giphy.gif",
             "https://media.giphy.com/media/l0HlHFRbmaZtBRhXG/giphy.gif",
