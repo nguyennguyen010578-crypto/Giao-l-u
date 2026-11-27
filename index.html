@@ -3,31 +3,27 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Kênh Giao Lưu Cộng Đồng</title>
-    
-    <!-- FAVICON TRÁI ĐẤT TRÁNG ĐEN (SVG DATA URI) -->
-    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'><path fill='%23000000' d='M256 0c141.4 0 256 114.6 256 256S397.4 512 256 512 0 397.4 0 256 114.6 0 256 0zm-11.8 32C121 32 32 121 32 244.2c2.7-.1 5.4-.2 8.2-.2 38.3 0 71.9 22.3 88 54.8 6.4 13 18.2 22.2 32.2 25 14 2.8 28.5-2.2 37.8-13l21.2-24.8c10.4-12.1 26-19 42.1-18.6 16.1.4 31.3 8 40.7 20.6l23.5 31.3c8.9 11.9 23 18.9 37.8 18.9h41.1c25.8 0 46.7 20.9 46.7 46.7 0 11.8-4.5 23.2-12.6 31.8l-12.8 13.7c29.1-38.3 46.3-86.2 46.3-138.2 0-111.4-79.9-204.2-185.1-222.2z'/></svg>">
-
-    <!-- Tailwind CSS CDN -->
+    <title>Phòng Chat Trực Tuyến Đa Năng</title>
+    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Font Awesome Icons -->
+    <!-- FontAwesome Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- Thư viện Google Identity Services SDK -->
+    <!-- Google Identity Services cho Đăng nhập Google -->
     <script src="https://accounts.google.com/gsi/client" async defer></script>
 
-    <!-- FIREBASE SDK V10 -->
+    <!-- Firebase SDKs -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getDatabase, ref, push, set, onValue, remove, update } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+        import { getDatabase, ref, set, push, onValue, remove, update } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
         const firebaseConfig = {
-            apiKey: "AIzaSyA8--ixFCWWvFGcIB4DpeXxigkTfci9Ltc",
-            authDomain: "congdongchat-7e672.firebaseapp.com",
-            databaseURL: "https://congdongchat-7e672-default-rtdb.firebaseio.com",
-            projectId: "congdongchat-7e672",
-            storageBucket: "congdongchat-7e672.firebasestorage.app",
-            messagingSenderId: "980712901607",
-            appId: "1:980712901607:web:41df5c8df406cda15c0b42"
+            apiKey: "AIzaSyD-MockKeyForDemoPurposeOnly123456789",
+            authDomain: "realtime-chat-demo.firebaseapp.com",
+            databaseURL: "https://realtime-chat-demo-default-rtdb.firebaseio.com",
+            projectId: "realtime-chat-demo",
+            storageBucket: "realtime-chat-demo.appspot.com",
+            messagingSenderId: "1234567890",
+            appId: "1:1234567890:web:abcdef123456"
         };
 
         const app = initializeApp(firebaseConfig);
@@ -35,61 +31,56 @@
 
         window.fbDb = db;
         window.fbRef = ref;
-        window.fbPush = push;
         window.fbSet = set;
+        window.fbPush = push;
         window.fbOnValue = onValue;
         window.fbRemove = remove;
         window.fbUpdate = update;
     </script>
 </head>
-<body class="bg-slate-100 text-slate-800 h-screen flex flex-col font-sans select-none m-0 p-0">
+<body class="bg-slate-100 font-sans antialiased h-screen flex flex-col overflow-hidden">
 
-    <!-- TOP HEADER -->
-    <header class="bg-white border-b border-slate-200 h-14 flex items-center justify-between px-6 z-30 shadow-sm">
-        <div class="flex items-center gap-3">
-            <div class="w-9 h-9 bg-emerald-600 text-white rounded-xl flex items-center justify-center font-bold shadow">
+    <!-- THANH ĐIỀU HƯỚNG TRÊN (HEADER) -->
+    <header class="h-16 bg-white border-b border-slate-200 px-6 flex items-center justify-between shadow-xs z-20">
+        <div class="flex items-center gap-3 cursor-pointer" onclick="goHome()">
+            <div class="w-10 h-10 bg-indigo-600 rounded-2xl flex items-center justify-center text-white text-lg shadow-md">
                 <i class="fas fa-comments"></i>
             </div>
-            <span class="font-extrabold text-base text-slate-900 cursor-pointer" onclick="goHome()">Kênh Giao Lưu Cộng Đồng</span>
+            <div>
+                <h1 class="font-extrabold text-slate-800 text-base leading-none">Phòng Chat Cộng Đồng</h1>
+                <span class="text-[10px] text-emerald-600 font-bold flex items-center gap-1 mt-0.5">
+                    <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span> Hoạt động trực tuyến
+                </span>
+            </div>
         </div>
 
         <div class="flex items-center gap-3">
-            <!-- WIDGET SỐ DƯ XU AT -->
-            <div class="flex items-center gap-1.5 bg-amber-50 border border-amber-200 px-3 py-1.5 rounded-full shadow-sm">
-                <div class="w-6 h-6 rounded-full bg-gradient-to-tr from-amber-400 to-yellow-300 border-2 border-amber-500 shadow-inner flex items-center justify-center shrink-0">
-                    <span class="text-[9px] font-extrabold text-amber-900 tracking-tighter">AT</span>
+            <!-- XU AT / NĂNG LƯỢNG -->
+            <div onclick="openAttendanceModal()" class="flex items-center gap-1.5 bg-amber-50 border border-amber-200 px-3 py-1.5 rounded-2xl cursor-pointer hover:bg-amber-100 transition shadow-xs group" title="Điểm danh hằng ngày nhận xu AT">
+                <div class="w-6 h-6 rounded-full bg-amber-500 text-white flex items-center justify-center text-xs font-black shadow-sm group-hover:scale-110 transition">
+                    AT
                 </div>
-                <span id="userEnergyCount" class="font-extrabold text-xs text-amber-800">0</span>
+                <span id="userEnergyCount" class="font-black text-xs text-amber-700">100</span>
+                <span id="attendanceBadge" class="w-2 h-2 bg-rose-500 rounded-full animate-ping hidden"></span>
             </div>
 
-            <!-- NÚT ĐIỂM DANH HẰNG NGÀY -->
-            <button onclick="openAttendanceModal()" class="relative text-amber-600 hover:text-amber-700 w-9 h-9 rounded-full bg-amber-50 hover:bg-amber-100 flex items-center justify-center transition shadow-sm" title="Điểm danh hằng ngày">
-                <i class="fas fa-calendar-check text-sm"></i>
-                <span id="attendanceBadge" class="hidden absolute -top-1 -right-1 bg-amber-500 text-white text-[9px] font-bold w-4 h-4 rounded-full flex items-center justify-center shadow">!</span>
-            </button>
-
             <!-- NÚT MỞ HỘP THƯ NHẮN RIÊNG -->
-            <button onclick="openInboxModal()" class="relative text-indigo-600 hover:text-indigo-700 w-9 h-9 rounded-full bg-indigo-50 hover:bg-indigo-100 flex items-center justify-center transition shadow-sm" title="Tin nhắn riêng">
+            <button onclick="openInboxModal()" class="w-10 h-10 rounded-2xl bg-indigo-50 text-indigo-600 hover:bg-indigo-100 flex items-center justify-center transition relative shadow-xs" title="Hộp thư nhắn riêng tư">
                 <i class="fas fa-envelope text-sm"></i>
-                <span id="inboxBadge" class="hidden absolute -top-1 -right-1 bg-red-500 text-white text-[9px] font-bold w-4 h-4 rounded-full flex items-center justify-center shadow">!</span>
             </button>
 
-            <button id="adminSettingBtn" onclick="openAdminModal()" class="hidden text-purple-600 hover:text-purple-800 text-xs px-3 py-1.5 rounded-full bg-purple-50 hover:bg-purple-100 font-bold transition flex items-center gap-1.5 shadow-sm">
-                <i class="fas fa-shield-alt"></i> Cài đặt Admin
-            </button>
-
-            <!-- NÚT MỤC THÔNG BÁO (BELL ICON) -->
-            <div id="notificationWrapper" class="relative hidden">
-                <button onclick="toggleNotificationDropdown()" class="relative text-slate-600 hover:text-indigo-600 w-9 h-9 rounded-full bg-slate-100 hover:bg-slate-200 flex items-center justify-center transition" title="Thông báo">
+            <!-- CHUÔNG THÔNG BÁO -->
+            <div class="relative">
+                <button onclick="toggleNotificationDropdown()" class="w-10 h-10 rounded-2xl bg-slate-100 hover:bg-slate-200 flex items-center justify-center transition relative shadow-xs text-slate-600" title="Thông báo hệ thống">
                     <i class="fas fa-bell text-sm"></i>
-                    <span id="unreadNotifBadge" class="hidden absolute -top-1 -right-1 bg-red-500 text-white text-[10px] font-bold w-4 h-4 rounded-full flex items-center justify-center shadow">0</span>
+                    <span id="unreadNotifBadge" class="absolute -top-1 -right-1 bg-rose-500 text-white text-[9px] font-bold px-1.5 py-0.2 rounded-full shadow hidden">0</span>
                 </button>
 
-                <!-- DROPDOWN DANH SÁCH THÔNG BÁO -->
-                <div id="notificationDropdown" class="hidden absolute right-0 mt-2 w-80 bg-white rounded-2xl shadow-2xl border border-slate-200 z-50 overflow-hidden">
-                    <div class="px-4 py-3 border-b border-slate-100 flex items-center justify-between bg-slate-50">
-                        <span class="font-bold text-xs text-slate-800"><i class="fas fa-bell text-indigo-600 mr-1"></i> Thông báo</span>
-                        <button onclick="markAllNotificationsRead()" class="text-[11px] text-indigo-600 hover:underline font-semibold">Đọc tất cả</button>
+                <!-- DROPDOWN THÔNG BÁO -->
+                <div id="notificationDropdown" class="absolute right-0 mt-2 w-80 bg-white rounded-3xl shadow-2xl border border-slate-100 hidden z-50 overflow-hidden">
+                    <div class="p-4 border-b flex items-center justify-between bg-slate-50">
+                        <span class="font-bold text-xs text-slate-800">Thông báo của bạn</span>
+                        <button onclick="markAllNotificationsRead()" class="text-[10px] text-indigo-600 hover:underline font-bold">Đánh dấu đã đọc</button>
                     </div>
                     <div id="notificationListContainer" class="max-h-72 overflow-y-auto divide-y divide-slate-100 text-xs">
                         <div class="p-6 text-center text-slate-400">Chưa có thông báo nào.</div>
@@ -97,105 +88,107 @@
                 </div>
             </div>
 
-            <div id="userProfileGroup" class="hidden flex items-center gap-2">
-                <div class="flex items-center gap-2 bg-slate-100 px-3 py-1.5 rounded-full border border-slate-200 hover:bg-slate-200/60 transition cursor-pointer" onclick="viewUserProfile(currentUser.email, currentUser.name, currentUser.picture)">
-                    <img id="userAvatarImg" src="" class="w-7 h-7 rounded-full object-cover border" alt="Avatar">
-                    <span id="userNameText" class="font-bold text-xs text-slate-800"></span>
+            <!-- NÚT CÀI ĐẶT ADMIN -->
+            <button id="adminSettingBtn" onclick="openAdminModal()" class="hidden w-10 h-10 rounded-2xl bg-purple-50 text-purple-600 hover:bg-purple-100 flex items-center justify-center transition relative shadow-xs" title="Quản trị hệ thống">
+                <i class="fas fa-shield-alt text-sm"></i>
+            </button>
+
+            <!-- THÔNG TIN NGƯỜI DÙNG & ĐĂNG XUẤT -->
+            <div id="userProfileGroup" class="hidden flex items-center gap-2 pl-2 border-l border-slate-200">
+                <div class="flex items-center gap-2 cursor-pointer" onclick="openEditProfileModal()">
+                    <img id="userAvatarImg" src="" class="w-9 h-9 rounded-full object-cover border-2 border-indigo-500 shadow-xs">
+                    <span id="userNameText" class="font-bold text-xs text-slate-700 max-w-[100px] truncate">User</span>
                 </div>
-                <button onclick="event.stopPropagation(); openEditProfileModal()" class="text-indigo-600 hover:text-indigo-800 text-xs p-2 rounded-full hover:bg-slate-200 transition" title="Chỉnh sửa hồ sơ">
-                    <i class="fas fa-pen"></i>
-                </button>
-                <button onclick="event.stopPropagation(); handleLogout()" class="text-red-500 hover:text-red-700 text-xs p-2 rounded-full hover:bg-slate-200 transition" title="Đăng xuất">
-                    <i class="fas fa-right-from-bracket"></i>
+                <button onclick="handleLogout()" class="text-slate-400 hover:text-rose-600 p-2 rounded-xl hover:bg-rose-50 transition" title="Đăng xuất">
+                    <i class="fas fa-sign-out-alt text-sm"></i>
                 </button>
             </div>
         </div>
     </header>
 
-    <!-- MAIN CONTAINER CHIA 2 CỘT (THANH TRỰC TUYẾN BÊN PHẢI) -->
-    <main class="flex-1 p-4 max-w-6xl mx-auto w-full flex gap-4 overflow-hidden" onclick="closeNotificationDropdown()">
-        
-        <!-- KHUNG CHAT CHÍNH (BÊN TRÁI) - TRANG CHỦ -->
-        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 flex flex-col flex-1 overflow-hidden">
-            
-            <div class="px-6 py-3 border-b border-slate-100 flex items-center justify-between bg-white">
-                <div class="flex items-center gap-3">
-                    <div class="w-8 h-8 bg-emerald-100 text-emerald-600 rounded-lg flex items-center justify-center font-bold text-xs">
-                        <i class="fas fa-globe"></i>
-                    </div>
+    <!-- GIAO DIỆN CHÍNH (KHUNG CHAT & SIDEBAR TRỰC TUYẾN) -->
+    <div class="flex-1 flex overflow-hidden">
+        <!-- KHUNG CHAT CHÍNH -->
+        <main class="flex-1 flex flex-col bg-white border-r border-slate-200 relative overflow-hidden">
+            <!-- VÙNG HIỂN THỊ TIN NHẮN -->
+            <div id="chatMessagesContainer" class="flex-1 overflow-y-auto p-6 space-y-4">
+                <div class="text-center text-xs text-slate-400 py-10">Đang tải tin nhắn từ máy chủ...</div>
+            </div>
+
+            <!-- KHUNG SOẠN THẢO VÀ ĐÍNH KÈM -->
+            <div class="p-4 bg-white border-t border-slate-200 space-y-3 shadow-lg">
+                <!-- KHUNG XEM TRƯỚC PHẢN HỒI (REPLY) -->
+                <div id="replyPreviewContainer" class="hidden flex items-center justify-between bg-slate-50 border-l-4 border-indigo-500 px-3 py-2 rounded-xl text-xs">
                     <div>
-                        <h2 class="font-bold text-xs text-slate-800">Phòng Trò Chuyện Trực Tuyến (Trang Chủ)</h2>
-                        <div class="text-[10px] text-emerald-600 font-semibold flex items-center gap-1">
-                            <span class="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></span> Đồng bộ Cloud Realtime & Tự xóa sau 30 ngày
-                        </div>
+                        <span class="font-bold text-indigo-600 block" id="replyingToName">Đang trả lời...</span>
+                        <p class="text-slate-500 truncate" id="replyingToText">Nội dung tin nhắn...</p>
                     </div>
+                    <button onclick="cancelReply()" class="text-slate-400 hover:text-slate-600"><i class="fas fa-times"></i></button>
+                </div>
+
+                <!-- CÁC NÚT TIỆN ÍCH (ẢNH, GIF, EMOJI & STICKER) -->
+                <div class="flex items-center gap-3 text-slate-500 text-xs">
+                    <button onclick="triggerImageUpload()" class="hover:text-indigo-600 flex items-center gap-1.5 font-medium bg-slate-50 hover:bg-indigo-50 px-3 py-1.5 rounded-xl border border-slate-200 transition">
+                        <i class="far fa-image text-emerald-500 text-sm"></i> Đính kèm ảnh
+                    </button>
+                    <button onclick="openGifModal()" class="hover:text-indigo-600 flex items-center gap-1.5 font-medium text-purple-600 bg-purple-50 hover:bg-purple-100 px-3 py-1.5 rounded-xl border border-purple-200 transition">
+                        <i class="fas fa-film text-sm"></i> Kho GIF & Tạo GIF
+                    </button>
+                    <button onclick="openEmojiStickerModal()" class="hover:text-amber-600 flex items-center gap-1.5 font-medium text-amber-600 bg-amber-50 hover:bg-amber-100 px-3 py-1.5 rounded-xl border border-amber-200 transition">
+                        <i class="far fa-face-smile text-sm"></i> Emoji & Sticker
+                    </button>
+                </div>
+
+                <!-- Ô NHẬP NỘI DUNG VÀ NÚT GỬI -->
+                <div class="flex items-center gap-2">
+                    <textarea id="chatInputText" onkeydown="handleKeySend(event)" rows="1" placeholder="Nhập tin nhắn của bạn (Shift + Xuống dòng để viết đoạn dài)..." class="flex-1 bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3 text-xs outline-none focus:border-indigo-500 transition resize-none max-h-24"></textarea>
+                    <button onclick="requestSendChatMessage()" class="w-11 h-11 bg-indigo-600 hover:bg-indigo-700 text-white rounded-2xl shadow-md flex items-center justify-center transition shrink-0 cursor-pointer" title="Gửi tin nhắn">
+                        <i class="fas fa-paper-plane text-sm"></i>
+                    </button>
+                </div>
+            </div>
+        </main>
+
+        <!-- SIDEBAR BÊN PHẢI: THÀNH VIÊN TRỰC TUYẾN & HỘP THƯ NHẮN RIÊNG -->
+        <aside class="w-72 bg-slate-50 flex flex-col border-l border-slate-200 hidden md:flex">
+            <!-- DANH SÁCH ĐOẠN CHAT RIÊNG GẦN ĐÂY -->
+            <div class="p-4 border-b border-slate-200">
+                <div class="flex items-center justify-between mb-3">
+                    <span class="font-bold text-xs text-slate-700 flex items-center gap-1.5">
+                        <i class="fas fa-envelope text-indigo-600"></i> Tin Nhắn Riêng Tư
+                    </span>
+                    <button onclick="openSelectAccountModal()" class="w-6 h-6 bg-indigo-100 text-indigo-600 rounded-lg hover:bg-indigo-200 flex items-center justify-center font-bold text-xs transition" title="Chọn thành viên nhắn riêng">
+                        <i class="fas fa-plus text-[10px]"></i>
+                    </button>
+                </div>
+                <div id="leftConversationsList" class="space-y-1.5 max-h-44 overflow-y-auto">
+                    <span class="text-slate-400 text-[11px] block text-center py-2">Chưa có tin nhắn riêng.</span>
                 </div>
             </div>
 
-            <div id="chatMessagesContainer" class="flex-1 p-6 overflow-y-auto space-y-4 bg-slate-50/50">
-                <div class="text-center text-xs text-slate-400 py-10">Đang tải tin nhắn...</div>
-            </div>
-
-            <div id="replyPreviewContainer" class="hidden px-4 pt-2 bg-white border-t border-slate-100 flex items-center justify-between text-xs">
-                <div class="flex items-center gap-2 text-slate-600 border-l-4 border-indigo-500 pl-2 py-0.5 truncate">
-                    <span class="font-bold text-indigo-600">Đang trả lời <span id="replyingToName"></span>:</span>
-                    <span id="replyingToText" class="text-slate-500 truncate max-w-md"></span>
+            <!-- THÀNH VIÊN TRỰC TUYẾN -->
+            <div class="p-4 flex-1 flex flex-col overflow-hidden">
+                <div class="flex items-center justify-between mb-3">
+                    <span class="font-bold text-xs text-slate-700 flex items-center gap-1.5">
+                        <i class="fas fa-users text-emerald-500"></i> Thành Viên Trực Tuyến
+                    </span>
+                    <span id="onlineCountBadge" class="bg-emerald-100 text-emerald-700 font-bold text-[10px] px-2 py-0.5 rounded-full">0</span>
                 </div>
-                <button onclick="cancelReply()" class="text-slate-400 hover:text-slate-600 px-2 py-1"><i class="fas fa-times"></i></button>
-            </div>
-
-            <div class="p-4 bg-white border-t border-slate-200">
-                <div class="bg-slate-50 border border-slate-200 rounded-2xl p-3 space-y-2 focus-within:border-indigo-500 transition">
-                    <textarea id="chatInputText" onkeydown="handleKeySend(event)" placeholder="Nhập tin nhắn giao lưu... (Nếu lớn hơn 1000 ký tự sẽ tự động đóng gói thành file .txt, Nhấn Enter để gửi)" rows="2" class="w-full bg-transparent text-xs text-slate-800 placeholder-slate-400 outline-none resize-none"></textarea>
-                    
-                    <div class="flex items-center justify-between pt-2 border-t border-slate-200/60 text-xs">
-                        <div class="flex items-center gap-3 text-slate-500">
-                            <button onclick="triggerImageUpload()" class="hover:text-indigo-600 flex items-center gap-1 font-medium" title="Đính kèm ảnh">
-                                <i class="far fa-image text-emerald-500 text-base"></i> Đính kèm ảnh
-                            </button>
-                            <button onclick="openGifModal()" class="hover:text-indigo-600 flex items-center gap-1 font-medium text-purple-600" title="Kho GIF & Tạo GIF mới">
-                                <i class="fas fa-film text-base"></i> Kho GIF & Tạo GIF
-                            </button>
-                        </div>
-
-                        <div class="flex items-center gap-3">
-                            <span class="text-[10px] text-slate-400">Enter ↵</span>
-                            <button onclick="requestSendChatMessage()" class="px-4 py-1.5 bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl font-bold shadow transition text-xs flex items-center gap-1.5">
-                                <i class="fas fa-paper-plane"></i> Gửi
-                            </button>
-                        </div>
-                    </div>
+                <div id="onlineMembersList" class="flex-1 overflow-y-auto space-y-2">
+                    <div class="text-center text-slate-400 py-6 text-[11px]">Đang tải danh sách trực tuyến...</div>
                 </div>
-            </div>
-
-        </div>
-
-        <!-- THANH BÊN PHẢI: THÀNH VIÊN TRỰC TUYẾN KÈM NÚT (+) -->
-        <aside id="onlineSidebar" class="w-64 bg-white rounded-2xl shadow-sm border border-slate-200 flex flex-col overflow-hidden shrink-0">
-            <div class="px-4 py-3 border-b border-slate-100 bg-slate-50 flex items-center justify-between">
-                <span class="font-bold text-xs text-slate-800 flex items-center gap-1.5">
-                    <i class="fas fa-signal text-emerald-500 animate-pulse"></i> Trực tuyến (<span id="onlineCountBadge">0</span>)
-                </span>
-                <!-- NÚT DẤU CỘNG (+) ĐỂ CHỌN TÀI KHOẢN NHẮN RIÊNG -->
-                <button onclick="openSelectAccountModal()" class="w-7 h-7 bg-indigo-50 hover:bg-indigo-100 text-indigo-600 rounded-full flex items-center justify-center font-bold text-xs transition shadow-xs" title="Nhắn tin riêng với tài khoản...">
-                    <i class="fas fa-plus"></i>
-                </button>
-            </div>
-            <div id="onlineMembersList" class="flex-1 p-3 overflow-y-auto space-y-2 text-xs">
-                <div class="text-center text-slate-400 py-6">Chưa có thành viên nào khác trực tuyến. Bấm nút <b>(+)</b> ở trên để chọn tài khoản nhắn riêng.</div>
             </div>
         </aside>
+    </div>
 
-    </main>
-
-    <!-- MODAL XÁC THỰC CHỐNG BOT (MÁY TÍNH) -->
-    <div id="captchaModal" class="fixed inset-0 z-50 bg-slate-900/80 backdrop-blur-md flex items-center justify-center p-4 hidden">
-        <div class="bg-white rounded-3xl shadow-2xl max-w-sm w-full p-6 space-y-5 border border-slate-100 text-center relative">
-            <div class="w-12 h-12 bg-indigo-50 text-indigo-600 rounded-2xl mx-auto flex items-center justify-center text-xl shadow mb-1">
-                <i class="fas fa-shield-alt"></i>
+    <!-- MODAL XÁC THỰC CAPTCHA CHUYỂN ĐỘNG CHUỘT -->
+    <div id="captchaModal" class="fixed inset-0 z-50 bg-slate-900/70 backdrop-blur-sm flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-3xl shadow-2xl max-w-sm w-full p-6 space-y-4 border border-slate-100 text-center">
+            <div class="w-12 h-12 bg-amber-50 text-amber-500 rounded-2xl mx-auto flex items-center justify-center text-xl shadow-sm">
+                <i class="fas fa-shield-halved"></i>
             </div>
             <div class="space-y-1">
-                <h3 class="font-bold text-base text-slate-800">Xác thực chống Bot (Máy tính)</h3>
+                <h3 class="font-bold text-base text-slate-800">Xác Thực Bảo Mật</h3>
                 <p class="text-xs text-slate-500">Di chuyển chuột và tick chọn để tiếp tục</p>
             </div>
 
@@ -227,7 +220,7 @@
         <div class="bg-white rounded-3xl shadow-2xl max-w-sm w-full p-6 space-y-4 border border-slate-100">
             <div class="flex items-center justify-between border-b pb-3">
                 <h3 class="font-bold text-base text-slate-800 flex items-center gap-2">
-                    <i class="fas fa-user-plus text-indigo-600"></i> Chọn tài khoản nhắn riêng
+                    <i class="fas fa-user-plus text-indigo-600"></i> Chọn tài khoản nhắn riêng (Phí 30 AT)
                 </h3>
                 <button onclick="closeSelectAccountModal()" class="text-slate-400 hover:text-slate-600"><i class="fas fa-times text-lg"></i></button>
             </div>
@@ -238,42 +231,28 @@
         </div>
     </div>
 
-    <!-- MODAL NHẮN TIN RIÊNG (INBOX / CHAT RIÊNG) -->
+    <!-- MODAL NHẮN TIN RIÊNG CHI TIẾT -->
     <div id="inboxModal" class="fixed inset-0 z-50 bg-slate-900/70 backdrop-blur-sm flex items-center justify-center p-4 hidden">
         <div class="bg-white rounded-3xl shadow-2xl max-w-xl w-full p-6 space-y-4 border border-slate-100 h-[80vh] flex flex-col">
             <div class="flex items-center justify-between border-b pb-3">
                 <h3 class="font-bold text-base text-slate-800 flex items-center gap-2">
-                    <i class="fas fa-envelope text-indigo-600"></i> Hộp Thư Nhắn Riêng Tư
+                    <i class="fas fa-envelope text-indigo-600"></i> Hộp Thư Nhắn Riêng Tư (Phí 30 AT)
                 </h3>
                 <button onclick="closeInboxModal()" class="text-slate-400 hover:text-slate-600"><i class="fas fa-times text-lg"></i></button>
             </div>
 
-            <div class="flex-1 flex gap-3 overflow-hidden">
-                <!-- Danh sách cuộc trò chuyện -->
-                <div class="w-1/3 border-r pr-2 overflow-y-auto space-y-2">
-                    <div class="flex items-center justify-between mb-2">
-                        <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Thành viên</p>
-                        <button onclick="closeInboxModal(); openSelectAccountModal();" class="text-[10px] bg-indigo-50 text-indigo-600 px-2 py-0.5 rounded font-bold hover:bg-indigo-100">+ Mới</button>
-                    </div>
-                    <div id="conversationsListContainer" class="space-y-1">
-                        <span class="text-slate-400 text-xs">Chưa có tin nhắn riêng nào.</span>
-                    </div>
+            <div class="flex-1 flex flex-col bg-slate-50 rounded-2xl p-3 border overflow-hidden">
+                <div id="privateChatHeader" class="border-b pb-2 mb-2 flex items-center justify-between">
+                    <span class="font-bold text-xs text-slate-700">Chọn một người để nhắn tin</span>
                 </div>
 
-                <!-- Khung chat riêng chi tiết -->
-                <div class="flex-1 flex flex-col bg-slate-50 rounded-2xl p-3 border overflow-hidden">
-                    <div id="privateChatHeader" class="border-b pb-2 mb-2 flex items-center justify-between">
-                        <span class="font-bold text-xs text-slate-700">Chọn một người để nhắn tin</span>
-                    </div>
+                <div id="privateMessagesContainer" class="flex-1 overflow-y-auto space-y-3 pr-1 text-xs">
+                    <div class="text-center text-slate-400 py-12">Chưa chọn đoạn chat nào.</div>
+                </div>
 
-                    <div id="privateMessagesContainer" class="flex-1 overflow-y-auto space-y-3 pr-1 text-xs">
-                        <div class="text-center text-slate-400 py-12">Chưa chọn đoạn chat nào.</div>
-                    </div>
-
-                    <div id="privateChatInputArea" class="hidden pt-2 border-t mt-2 flex gap-2">
-                        <input type="text" id="privateMsgInput" onkeydown="handlePrivateMsgKey(event)" placeholder="Nhập tin nhắn riêng..." class="flex-1 px-3 py-2 border rounded-xl text-xs outline-none focus:border-indigo-500 bg-white">
-                        <button onclick="sendPrivateMessage()" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold shadow shrink-0">Gửi</button>
-                    </div>
+                <div id="privateChatInputArea" class="hidden pt-2 border-t mt-2 flex gap-2">
+                    <input type="text" id="privateMsgInput" onkeydown="handlePrivateMsgKey(event)" placeholder="Nhập tin nhắn riêng (Trừ 30 AT)..." class="flex-1 px-3 py-2 border rounded-xl text-xs outline-none focus:border-indigo-500 bg-white">
+                    <button onclick="sendPrivateMessage()" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold shadow shrink-0">Gửi (30 AT)</button>
                 </div>
             </div>
         </div>
@@ -301,6 +280,46 @@
         </div>
     </div>
 
+    <!-- MODAL KHO EMOJI & STICKER (CÓ TÍNH NĂNG TẢI STICKER CÁ NHÂN) -->
+    <div id="emojiStickerModal" class="fixed inset-0 z-50 bg-slate-900/70 backdrop-blur-sm flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-3xl shadow-2xl max-w-md w-full p-6 space-y-4 border border-slate-100 relative max-h-[90vh] overflow-y-auto">
+            <div class="flex items-center justify-between border-b pb-3">
+                <h3 class="font-bold text-base text-slate-800 flex items-center gap-2">
+                    <i class="far fa-face-smile text-amber-500"></i> Kho Emoji & Sticker Cộng Đồng
+                </h3>
+                <button onclick="closeEmojiStickerModal()" class="text-slate-400 hover:text-slate-600"><i class="fas fa-times text-lg"></i></button>
+            </div>
+
+            <!-- Tab chuyển đổi giữa Emoji và Sticker -->
+            <div class="flex bg-slate-100 p-1 rounded-xl text-xs font-bold">
+                <button onclick="switchEmojiTab('emoji')" id="tabEmojiBtn" class="flex-1 py-2 bg-white rounded-lg shadow-xs text-indigo-600 transition">Biểu tượng (Emojis)</button>
+                <button onclick="switchEmojiTab('sticker')" id="tabStickerBtn" class="flex-1 py-2 text-slate-500 transition">Nhãn dán (Stickers)</button>
+            </div>
+
+            <!-- Nội dung Emoji -->
+            <div id="emojiTabContent" class="space-y-3">
+                <p class="text-[11px] text-slate-500">Bấm vào biểu tượng bất kỳ để chèn vào khung chat:</p>
+                <div id="emojiGrid" class="grid grid-cols-6 gap-2 text-2xl max-h-56 overflow-y-auto p-1 text-center"></div>
+            </div>
+
+            <!-- Nội dung Sticker -->
+            <div id="stickerTabContent" class="space-y-3 hidden">
+                <div class="bg-indigo-50/60 p-3 rounded-2xl border border-indigo-200 space-y-2">
+                    <label class="block text-xs font-bold text-indigo-900"><i class="fas fa-upload text-indigo-600 mr-1"></i> Tải sticker của riêng bạn lên kho chung:</label>
+                    <div class="flex gap-2">
+                        <input type="file" id="customStickerFileInput" accept="image/*" class="hidden" onchange="handleCustomStickerFile(event)">
+                        <input type="text" id="customStickerNameInput" placeholder="Nhập tên/từ khóa sticker..." class="w-full px-3 py-2 border border-indigo-200 rounded-xl text-xs outline-none focus:border-indigo-500 bg-white">
+                        <button onclick="document.getElementById('customStickerFileInput').click()" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold shadow shrink-0">Chọn ảnh</button>
+                    </div>
+                </div>
+
+                <p class="text-[11px] text-slate-500">Bấm vào sticker để gửi ngay vào phòng chat:</p>
+                <div id="stickerGrid" class="grid grid-cols-3 gap-2.5 max-h-48 overflow-y-auto p-1"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- CÁC THẺ INPUT FILE ẨN -->
     <input type="file" id="chatImageInput" accept="image/*" class="hidden" onchange="handleChatImage(event)">
     <input type="file" id="avatarFileInput" accept="image/*" class="hidden" onchange="handleAvatarFileSelect(event)">
 
@@ -545,6 +564,7 @@
         let cloudFollowsData = {};
         let cloudProfilesData = {};
         let cloudCustomGifs = {};
+        let cloudCustomStickers = {};
         let cloudReportsData = {};
         let cloudPrivateMessages = {};
         let userNotifications = [];
@@ -564,6 +584,24 @@
         let pendingDataPayload = null;
 
         let activePrivatePartnerEmail = null;
+        let tempStickerBase64 = null;
+
+        const emojiList = [
+            '😀', '😃', '😄', '😁', '😆', '😅', '🤣', '😂', '🙂', '🙃', '😉', '😊',
+            '😇', '🥰', '😍', '🤩', '😘', '😗', '😚', '😙', '😋', '😛', '😜', '🤪',
+            '😎', '🥳', '😏', '😒', '😞', '😔', '😟', '😕', '🙁', '😣', '😖', '😫',
+            '👍', '👎', '👏', '🙌', '👐', '🤲', '🤝', '🙏', '✌️', '🤞', '❤️', '🔥',
+            '⭐', '✨', '💡', '🎉', '🎊', '🎁', '🏆', '⚽', '🍕', '☕', '🚀', '💯'
+        ];
+
+        const stickerList = [
+            "https://media.giphy.com/media/LmNwrBhejkK9EFP504/giphy.gif",
+            "https://media.giphy.com/media/13HgwGsXF0aiGY/giphy.gif",
+            "https://media.giphy.com/media/26AHONQ79FdWZhAI0/giphy.gif",
+            "https://media.giphy.com/media/3o7TKsQ8UQY8gLJlLU/giphy.gif",
+            "https://media.giphy.com/media/dzaUX7CAG0Ihi/giphy.gif",
+            "https://media.giphy.com/media/5hoW5wzfnAd0pVCZRX/giphy.gif"
+        ];
 
         function isDesktopDevice() {
             return window.innerWidth >= 768 && !(/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent));
@@ -879,7 +917,6 @@
 
         function openInboxModal() {
             if (!currentUser) return alert('Vui lòng đăng nhập!');
-            renderConversationsList();
             document.getElementById('inboxModal').classList.remove('hidden');
         }
 
@@ -908,13 +945,19 @@
                 if (!p || !p.email || p.email.toLowerCase() === currentUser.email.toLowerCase()) return '';
                 validCount++;
                 const safeName = (p.name || '').replace(/'/g, "\\'");
+                const isTargetAdmin = checkIsAdmin(p.email, p.name);
 
                 return `
-                    <div onclick="closeSelectAccountModal(); openPrivateChatWithUser('${p.email}', '${safeName}', '${p.picture || ''}')" class="p-2.5 rounded-xl cursor-pointer transition flex items-center gap-2 bg-slate-50 hover:bg-indigo-50 border border-slate-200">
-                        <img src="${p.picture || 'https://api.dicebear.com/7.x/bottts/svg?seed=' + p.name}" class="w-8 h-8 rounded-full object-cover border shrink-0">
-                        <div class="overflow-hidden">
-                            <p class="font-bold text-xs text-slate-800 truncate">${p.name}</p>
-                            <p class="text-[10px] text-slate-400 truncate">${p.email}</p>
+                    <div onclick="closeSelectAccountModal(); openPrivateChatWithUser('${p.email}', '${safeName}', '${p.picture || ''}')" class="p-2.5 rounded-xl cursor-pointer transition flex items-center justify-between gap-2 bg-slate-50 hover:bg-indigo-50 border border-slate-200">
+                        <div class="flex items-center gap-2 overflow-hidden flex-1">
+                            <img src="${p.picture || 'https://api.dicebear.com/7.x/bottts/svg?seed=' + p.name}" class="w-8 h-8 rounded-full object-cover border shrink-0">
+                            <div class="overflow-hidden flex-1">
+                                <div class="flex items-center gap-1.5">
+                                    <p class="font-bold text-xs text-slate-800 truncate">${p.name}</p>
+                                    ${isTargetAdmin ? '<span class="px-1.5 py-0.5 bg-purple-100 text-purple-700 rounded text-[9px] font-bold shrink-0">Admin</span>' : ''}
+                                </div>
+                                <p class="text-[10px] text-slate-400 truncate">${p.email}</p>
+                            </div>
                         </div>
                     </div>
                 `;
@@ -945,9 +988,9 @@
             openPrivateChatWithUser(currentViewingEmail, partnerName, partnerPic);
         }
 
-        function renderConversationsList() {
-            const container = document.getElementById('conversationsListContainer');
-            if (!container) return;
+        function renderLeftConversationsList() {
+            const container = document.getElementById('leftConversationsList');
+            if (!container || !currentUser) return;
 
             let partnersMap = {};
             Object.keys(cloudPrivateMessages).forEach(k => {
@@ -960,18 +1003,9 @@
                 }
             });
 
-            Object.keys(cloudProfilesData).forEach(k => {
-                const p = cloudProfilesData[k];
-                if (p && p.email && p.email.toLowerCase() !== currentUser.email.toLowerCase()) {
-                    if (!partnersMap[p.email]) {
-                        partnersMap[p.email] = { name: p.name, picture: p.picture, email: p.email };
-                    }
-                }
-            });
-
             const partnerKeys = Object.keys(partnersMap);
             if (partnerKeys.length === 0) {
-                container.innerHTML = `<span class="text-slate-400 text-xs">Chưa có cuộc trò chuyện nào. Hãy bấm dấu (+) để bắt đầu!</span>`;
+                container.innerHTML = `<span class="text-slate-400 text-[11px] block text-center py-2">Chưa có tin nhắn riêng. Bấm nút (+) phía trên để bắt đầu!</span>`;
                 return;
             }
 
@@ -979,13 +1013,19 @@
                 const partner = partnersMap[email];
                 const isActive = activePrivatePartnerEmail && activePrivatePartnerEmail.toLowerCase() === email.toLowerCase();
                 const safeName = (partner.name || '').replace(/'/g, "\\'");
+                const isPartnerAdmin = checkIsAdmin(partner.email, partner.name);
 
                 return `
-                    <div onclick="openPrivateChatWithUser('${partner.email}', '${safeName}', '${partner.picture || ''}')" class="p-2.5 rounded-xl cursor-pointer transition flex items-center gap-2 border ${isActive ? 'bg-indigo-50 border-indigo-300 shadow-xs' : 'bg-white hover:bg-slate-50 border-slate-100'}">
-                        <img src="${partner.picture || 'https://api.dicebear.com/7.x/bottts/svg?seed=' + partner.name}" class="w-8 h-8 rounded-full object-cover border shrink-0">
-                        <div class="overflow-hidden">
-                            <p class="font-bold text-xs text-slate-800 truncate">${partner.name}</p>
-                            <p class="text-[10px] text-slate-400 truncate">${partner.email}</p>
+                    <div onclick="openPrivateChatWithUser('${partner.email}', '${safeName}', '${partner.picture || ''}')" class="p-2 rounded-xl cursor-pointer transition flex items-center justify-between gap-2 border ${isActive ? 'bg-indigo-50 border-indigo-300 shadow-xs' : 'bg-white hover:bg-slate-50 border-slate-100'}">
+                        <div class="flex items-center gap-2 overflow-hidden flex-1">
+                            <img src="${partner.picture || 'https://api.dicebear.com/7.x/bottts/svg?seed=' + partner.name}" class="w-7 h-7 rounded-full object-cover border shrink-0">
+                            <div class="overflow-hidden flex-1">
+                                <div class="flex items-center gap-1.5">
+                                    <p class="font-bold text-xs text-slate-800 truncate">${partner.name}</p>
+                                    ${isPartnerAdmin ? '<span class="px-1.5 py-0.5 bg-purple-100 text-purple-700 rounded text-[9px] font-bold shrink-0">Admin</span>' : ''}
+                                </div>
+                                <p class="text-[9px] text-slate-400 truncate">${partner.email}</p>
+                            </div>
                         </div>
                     </div>
                 `;
@@ -998,10 +1038,13 @@
             const container = document.getElementById('privateMessagesContainer');
             if (!header || !inputArea || !container) return;
 
+            const isPartnerAdmin = checkIsAdmin(partnerEmail, partnerName);
+
             header.innerHTML = `
                 <div class="flex items-center gap-2">
                     <img src="${partnerPic || 'https://api.dicebear.com/7.x/bottts/svg?seed=' + partnerName}" class="w-7 h-7 rounded-full object-cover border">
                     <span class="font-bold text-xs text-slate-800">${partnerName}</span>
+                    ${isPartnerAdmin ? `<span class="px-1.5 py-0.5 bg-purple-100 text-purple-700 rounded text-[9px] font-bold">Admin</span>` : ''}
                 </div>
             `;
             inputArea.classList.remove('hidden');
@@ -1018,7 +1061,7 @@
             chatList.sort((a, b) => a.timestamp - b.timestamp);
 
             if (chatList.length === 0) {
-                container.innerHTML = `<div class="text-center text-slate-400 py-12 text-xs">Chưa có tin nhắn riêng nào với ${partnerName}. Hãy bắt đầu trò chuyện!</div>`;
+                container.innerHTML = `<div class="text-center text-slate-400 py-12 text-xs">Chưa có tin nhắn riêng nào với ${partnerName}. Mỗi tin nhắn riêng sẽ tốn 30 AT. Hãy bắt đầu trò chuyện!</div>`;
                 return;
             }
 
@@ -1065,11 +1108,11 @@
                 window.fbSet(window.fbRef(window.fbDb, `guest_free_msg/${userKey}`), guestFreeMsgData);
 
             } else {
-                if (userEnergy < 20) {
-                    alert(`Bạn không đủ xu AT! Nhắn tin riêng yêu cầu 20 xu AT (Bạn đang có ${userEnergy} AT). Hãy điểm danh hằng ngày để nhận thêm.`);
+                if (userEnergy < 30) {
+                    alert(`Bạn không đủ xu AT! Nhắn tin riêng yêu cầu 30 xu AT (Bạn đang có ${userEnergy} AT). Hãy điểm danh hằng ngày để nhận thêm.`);
                     return;
                 }
-                userEnergy -= 20;
+                userEnergy -= 30;
                 updateEnergyUI();
                 const energyRef = window.fbRef(window.fbDb, `user_energies/${encodeFirebaseKey(currentUser.email)}`);
                 window.fbSet(energyRef, userEnergy);
@@ -1102,6 +1145,7 @@
             window.fbSet(window.fbPush(pmRef), pmData).then(() => {
                 input.value = '';
                 pushNotificationToUser(activePrivatePartnerEmail, 'Tin nhắn riêng mới', `${currentUser.name} đã gửi tin nhắn riêng cho bạn.`, 'reply');
+                renderLeftConversationsList();
                 renderPrivateChatWindow(activePrivatePartnerEmail, partnerName, partnerPic);
             });
         }
@@ -1432,6 +1476,7 @@
             window.fbOnValue(profilesRef, (snapshot) => {
                 cloudProfilesData = snapshot.val() || {};
                 renderMessages();
+                renderLeftConversationsList();
                 if (!document.getElementById('adminModal').classList.contains('hidden')) {
                     renderAllUsersList();
                 }
@@ -1448,21 +1493,19 @@
             const pmRef = window.fbRef(window.fbDb, 'private_messages');
             window.fbOnValue(pmRef, (snapshot) => {
                 cloudPrivateMessages = snapshot.val() || {};
-                if (!document.getElementById('inboxModal').classList.contains('hidden')) {
-                    renderConversationsList();
-                    if (activePrivatePartnerEmail) {
-                        let partnerName = "Thành viên";
-                        let partnerPic = "";
-                        for (let k in cloudProfilesData) {
-                            const p = cloudProfilesData[k];
-                            if (p.email && p.email.toLowerCase() === activePrivatePartnerEmail.toLowerCase()) {
-                                partnerName = p.name;
-                                partnerPic = p.picture || '';
-                                break;
-                            }
+                renderLeftConversationsList();
+                if (!document.getElementById('inboxModal').classList.contains('hidden') && activePrivatePartnerEmail) {
+                    let partnerName = "Thành viên";
+                    let partnerPic = "";
+                    for (let k in cloudProfilesData) {
+                        const p = cloudProfilesData[k];
+                        if (p.email && p.email.toLowerCase() === activePrivatePartnerEmail.toLowerCase()) {
+                            partnerName = p.name;
+                            partnerPic = p.picture || '';
+                            break;
                         }
-                        renderPrivateChatWindow(activePrivatePartnerEmail, partnerName, partnerPic);
                     }
+                    renderPrivateChatWindow(activePrivatePartnerEmail, partnerName, partnerPic);
                 }
             });
 
@@ -1477,6 +1520,7 @@
                 }
                 updateUserUI();
                 renderAdminList();
+                renderLeftConversationsList();
                 if (!document.getElementById('adminModal').classList.contains('hidden')) {
                     renderAllUsersList();
                 }
@@ -1497,6 +1541,14 @@
                 cloudCustomGifs = snapshot.val() || {};
                 if (!document.getElementById('gifModal').classList.contains('hidden')) {
                     filterLocalGifs('');
+                }
+            });
+
+            const customStickersRef = window.fbRef(window.fbDb, 'custom_stickers');
+            window.fbOnValue(customStickersRef, (snapshot) => {
+                cloudCustomStickers = snapshot.val() || {};
+                if (!document.getElementById('emojiStickerModal').classList.contains('hidden')) {
+                    renderStickers();
                 }
             });
 
@@ -1629,13 +1681,14 @@
             badge.innerText = onlineUsers.length;
 
             if (onlineUsers.length === 0) {
-                container.innerHTML = `<div class="text-center text-slate-400 py-6">Chưa có thành viên nào khác trực tuyến. Bấm nút <b>(+)</b> ở trên để chọn tài khoản nhắn riêng.</div>`;
+                container.innerHTML = `<div class="text-center text-slate-400 py-3 text-[11px]">Không có thành viên trực tuyến. Bấm nút <b>(+)</b> để chọn tài khoản nhắn riêng.</div>`;
                 return;
             }
 
             container.innerHTML = onlineUsers.map(u => {
                 const safeName = (u.name || '').replace(/'/g, "\\'");
                 const isMe = currentUser && currentUser.email === u.email;
+                const isAdminUser = checkIsAdmin(u.email, u.name);
 
                 return `
                     <div class="p-2 hover:bg-slate-50 rounded-xl transition flex items-center justify-between gap-2 border border-slate-100 shadow-xs">
@@ -1644,9 +1697,12 @@
                                 <img src="${u.picture || 'https://api.dicebear.com/7.x/bottts/svg?seed=' + u.name}" class="w-7 h-7 rounded-full object-cover border">
                                 <span class="absolute bottom-0 right-0 w-2 h-2 bg-emerald-500 border-2 border-white rounded-full"></span>
                             </div>
-                            <div class="truncate">
-                                <p class="font-bold text-xs text-slate-800 truncate">${u.name} ${isMe ? '<span class="text-[9px] text-indigo-600 font-semibold">(Bạn)</span>' : ''}</p>
-                                <p class="text-[9px] text-emerald-600 font-medium">Đang trực tuyến</p>
+                            <div class="truncate flex-1">
+                                <div class="flex items-center gap-1.5">
+                                    <p class="font-bold text-xs text-slate-800 truncate">${u.name} ${isMe ? '<span class="text-[9px] text-indigo-600 font-semibold">(Bạn)</span>' : ''}</p>
+                                    ${isAdminUser ? '<span class="px-1.5 py-0.5 bg-purple-100 text-purple-700 rounded text-[9px] font-bold shrink-0">Admin</span>' : ''}
+                                </div>
+                                <p class="text-[9px] text-emerald-600 font-medium">Trực tuyến</p>
                             </div>
                         </div>
                         ${!isMe ? `<button onclick="openPrivateChatWithUser('${u.email}', '${safeName}', '${u.picture || ''}')" class="text-indigo-600 hover:text-indigo-800 p-1.5 rounded-lg hover:bg-indigo-50 transition shrink-0" title="Nhắn tin riêng"><i class="fas fa-envelope text-xs"></i></button>` : ''}
@@ -1689,6 +1745,7 @@
                 } else {
                     adminBtn.classList.add('hidden');
                 }
+                renderLeftConversationsList();
             } else {
                 userGrp.classList.add('hidden');
                 notifWrapper.classList.add('hidden');
@@ -1730,7 +1787,7 @@
 
                 return `
                     <div class="p-2 bg-slate-50 rounded-xl border flex items-center justify-between gap-2">
-                        <div class="flex items-center gap-2 overflow-hidden cursor-pointer hover:opacity-80" onclick="viewUserProfile('${u.email}', '${safeName}', '${u.picture || ''}')">
+                        <div class="flex items-center gap-2 overflow-hidden cursor-pointer hover:opacity-85" onclick="viewUserProfile('${u.email}', '${safeName}', '${u.picture || ''}')">
                             <img src="${u.picture || 'https://api.dicebear.com/7.x/bottts/svg?seed=' + u.name}" class="w-7 h-7 rounded-full object-cover border shrink-0">
                             <div class="truncate">
                                 <p class="font-bold text-xs text-slate-800 truncate">${u.name} ${u.isGuest ? '<span class="text-[10px] bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded font-bold">Khách</span>' : ''} ${isAdmin ? '<span class="text-[10px] bg-purple-100 text-purple-700 px-1.5 py-0.5 rounded font-bold">Admin</span>' : ''}</p>
@@ -2127,6 +2184,109 @@
             }
         }
 
+        function openEmojiStickerModal() {
+            if (!currentUser) return alert('Vui lòng đăng nhập!');
+            document.getElementById('emojiStickerModal').classList.remove('hidden');
+            renderEmojis();
+            renderStickers();
+        }
+
+        function closeEmojiStickerModal() {
+            document.getElementById('emojiStickerModal').classList.add('hidden');
+        }
+
+        function switchEmojiTab(type) {
+            const emojiTabContent = document.getElementById('emojiTabContent');
+            const stickerTabContent = document.getElementById('stickerTabContent');
+            const tabEmojiBtn = document.getElementById('tabEmojiBtn');
+            const tabStickerBtn = document.getElementById('tabStickerBtn');
+
+            if (type === 'emoji') {
+                emojiTabContent.classList.remove('hidden');
+                stickerTabContent.classList.add('hidden');
+                tabEmojiBtn.className = "flex-1 py-2 bg-white rounded-lg shadow-xs text-indigo-600 transition";
+                tabStickerBtn.className = "flex-1 py-2 text-slate-500 transition";
+            } else {
+                emojiTabContent.classList.add('hidden');
+                stickerTabContent.classList.remove('hidden');
+                tabStickerBtn.className = "flex-1 py-2 bg-white rounded-lg shadow-xs text-indigo-600 transition";
+                tabEmojiBtn.className = "flex-1 py-2 text-slate-500 transition";
+            }
+        }
+
+        function renderEmojis() {
+            const grid = document.getElementById('emojiGrid');
+            if (!grid) return;
+            grid.innerHTML = emojiList.map(emoji => `
+                <button onclick="insertEmojiToInput('${emoji}')" class="p-2 hover:bg-slate-100 rounded-xl transition hover:scale-125 transform">
+                    ${emoji}
+                </button>
+            `).join('');
+        }
+
+        function insertEmojiToInput(emoji) {
+            const input = document.getElementById('chatInputText');
+            input.value += emoji;
+            input.focus();
+            closeEmojiStickerModal();
+        }
+
+        function handleCustomStickerFile(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                tempStickerBase64 = e.target.result;
+                const nameInput = document.getElementById('customStickerNameInput');
+                if (!nameInput.value) {
+                    nameInput.value = file.name.split('.')[0];
+                }
+                saveCustomStickerToCloud(tempStickerBase64, nameInput.value.trim() || 'Sticker mới');
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function saveCustomStickerToCloud(url, prompt) {
+            if (!currentUser) return alert('Vui lòng đăng nhập!');
+            if (!window.fbDb) return alert('Lỗi kết nối cơ sở dữ liệu!');
+
+            const customStickersRef = window.fbRef(window.fbDb, 'custom_stickers');
+            window.fbSet(window.fbPush(customStickersRef), {
+                url: url,
+                prompt: prompt,
+                author: currentUser.name
+            }).then(() => {
+                alert('Đã tải lên và thêm sticker vào kho chung thành công!');
+                document.getElementById('customStickerNameInput').value = '';
+                tempStickerBase64 = null;
+                renderStickers();
+            }).catch(err => {
+                alert('Lỗi tải lên sticker: ' + err.message);
+            });
+        }
+
+        function renderStickers() {
+            const grid = document.getElementById('stickerGrid');
+            if (!grid) return;
+
+            let allStickers = [...stickerList];
+            Object.values(cloudCustomStickers).forEach(item => {
+                if (item && item.url) allStickers.unshift(item.url);
+            });
+
+            grid.innerHTML = allStickers.map(url => `
+                <div class="relative group">
+                    <img src="${url}" onclick="sendStickerMessage('${url}')" class="w-full h-24 object-contain cursor-pointer p-1 bg-slate-50 hover:bg-purple-50 rounded-xl border border-slate-100 hover:border-purple-300 transition hover:scale-105">
+                </div>
+            `).join('');
+        }
+
+        function sendStickerMessage(stickerUrl) {
+            closeEmojiStickerModal();
+            openCaptchaModal('gif', stickerUrl);
+        }
+
         function performSendGifMessage(gifUrl) {
             const replyTarget = replyingTo ? { ...replyingTo } : null;
             const newMsg = {
@@ -2330,6 +2490,7 @@
                 const profile = cloudProfilesData[userKey] || { name: msg.author, picture: msg.avatar };
                 const displayAuthor = profile.name;
                 const displayAvatar = profile.picture;
+                const isMsgAuthorAdmin = checkIsAdmin(msg.email, displayAuthor);
 
                 let replyHtml = '';
                 if (msg.replyTo) {
@@ -2409,8 +2570,8 @@
 
                 const safeAuthor = displayAuthor.replace(/'/g, "\\'");
                 const avatarHtml = displayAvatar 
-                    ? `<img src="${displayAvatar}" onclick="viewUserProfile('${msg.email}', '${safeAuthor}', '${displayAvatar}')" class="w-8 h-8 rounded-full object-cover border cursor-pointer hover:opacity-80 transition shrink-0">` 
-                    : `<div onclick="viewUserProfile('${msg.email}', '${safeAuthor}', '')" class="w-8 h-8 bg-indigo-600 text-white rounded-full flex items-center justify-center font-bold text-xs cursor-pointer hover:opacity-80 transition shrink-0">${displayAuthor.charAt(0).toUpperCase()}</div>`;
+                    ? `<img src="${displayAvatar}" onclick="viewUserProfile('${msg.email}', '${safeAuthor}', '${displayAvatar}')" class="w-8 h-8 rounded-full object-cover border cursor-pointer hover:opacity-85 transition shrink-0">` 
+                    : `<div onclick="viewUserProfile('${msg.email}', '${safeAuthor}', '')" class="w-8 h-8 bg-indigo-600 text-white rounded-full flex items-center justify-center font-bold text-xs cursor-pointer hover:opacity-85 transition shrink-0">${displayAuthor.charAt(0).toUpperCase()}</div>`;
 
                 const canDelete = isAdmin || isMyMsg;
                 const actionsHtml = `
@@ -2427,8 +2588,9 @@
                 div.innerHTML = `
                     ${avatarHtml}
                     <div class="${isMyMsg ? 'text-right' : 'text-left'} relative">
-                        <div class="flex items-center gap-2 ${isMyMsg ? 'justify-end' : 'justify-start'}">
+                        <div class="flex items-center gap-1.5 ${isMyMsg ? 'justify-end' : 'justify-start'}">
                             <span onclick="viewUserProfile('${msg.email}', '${safeAuthor}', '${displayAvatar || ''}')" class="font-bold text-xs text-slate-800 hover:underline cursor-pointer">${displayAuthor}</span>
+                            ${isMsgAuthorAdmin ? '<span class="px-1.5 py-0.5 bg-purple-100 text-purple-700 rounded text-[9px] font-bold">Admin</span>' : ''}
                             <span class="text-[10px] text-slate-400">${msg.time}</span>
                         </div>
                         ${bodyContent}
